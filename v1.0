@@ -1,0 +1,344 @@
+<script id="agent-dashboard-script" data-json='{
+    "company": "Genesis Of Norman", "generatedAtUTC": "2025-09-09T21:23:21.435Z",
+    "byRange": {
+      "24h": { "messages": { "inbound": 47, "outbound": 261 }, "leads": 80, "sold": 0 },
+      "7d": { "messages": { "inbound": 95, "outbound": 472 }, "leads": 111, "sold": 4 }
+    },
+    "agentsByRange": {
+      "24h": [
+        { "agent": "dbr", "inbound": 21, "outbound": 212, "leads": 28, "sold": 0 },
+        { "agent": "Instant S2L", "inbound": 23, "outbound": 44, "leads": 51, "sold": 0 },
+        { "agent": "live chat", "inbound": 1, "outbound": 2, "leads": 1, "sold": 0 },
+        { "agent": "fb / ig", "inbound": 2, "outbound": 3, "leads": 0, "sold": 0 }
+      ],
+      "7d": [
+        { "agent": "dbr", "inbound": 50, "outbound": 297, "leads": 31, "sold": 0 },
+        { "agent": "Instant S2L", "inbound": 41, "outbound": 163, "leads": 77, "sold": 4 }
+      ]
+    },
+    "auditStatusTotals": [
+      { "Status": "New", "Count": 108 }, { "Status": "Lost", "Count": 26 }, { "Status": "Sold", "Count": 13 },
+      { "Status": "Needs Follow Up", "Count": 48 }, { "Status": "Pipeline", "Count": 11 }, { "Status": "sold b/ai", "Count": 2 }
+    ],
+    "auditByAgent": [
+      { "agent": "dbr", "totals": [{ "Status": "New", "Count": 30 }, { "Status": "Needs Follow Up", "Count": 5 }, { "Status": "Pipeline", "Count": 3 }] },
+      { "agent": "Instant S2L", "totals": [{ "Status": "Lost", "Count": 24 }, { "Status": "New", "Count": 75 }, { "Status": "Sold", "Count": 11 }, { "Status": "Needs Follow Up", "Count": 38 }] },
+      { "agent": "live chat", "totals": [{ "Status": "Lost", "Count": 2 }, { "Status": "Needs Follow Up", "Count": 3 }] },
+      { "agent": "fb / ig", "totals": [{ "Status": "Sold", "Count": 1 }, { "Status": "Needs Follow Up", "Count": 2 }] }
+    ],
+    "allContacts": [
+      { "name": "Wylie", "id": "instants2l_36", "tag": "Instant S2L" }, { "name": "Alisa", "id": "instants2l_37", "tag": "Instant S2L" },
+      { "name": "Douglas", "id": "instants2l_38", "tag": "Instant S2L" }, { "name": "Tracy", "id": "instants2l_39", "tag": "Instant S2L" },
+      { "name": "Shelly", "id": "livechat_1", "tag": "live chat" }, { "name": "John Doe", "id": "dbr_1", "tag": "dbr" },
+      { "name": "Jane Smith", "id": "dbr_2", "tag": "dbr" }
+    ]
+  }'>
+(function() {
+  // --- PART 1: SETUP AND INJECTION ---
+  const container = document.getElementById('dashboard-root');
+  if (!container) { console.error('Dashboard container #dashboard-root not found.'); return; }
+
+  const scriptTag = document.getElementById('agent-dashboard-script');
+  let DATA;
+  try {
+    DATA = JSON.parse(scriptTag.getAttribute('data-json'));
+  } catch (e) {
+    console.error("Could not parse data-json from script tag.", e);
+    // You could put your fallback sample data here if needed
+    DATA = {}; 
+  }
+  
+  // Define all CSS and HTML as template strings
+  const dashboardCSS = `
+    :root {
+      --bg-main: #0f1115; --bg-panel: #17191e; --bg-panel-2: #21242b; --bg-element: #101215;
+      --line: #2b2f36; --text-main: #ffffff; --text-muted: #a9b0bc; --primary: #ed6c03;
+      --primary-dark: #b94f00; --radius: 12px; --font: 'Outfit', sans-serif; --shadow: 0 8px 32px rgba(0,0,0,.25);
+    }
+    #dashboard-root *, #dashboard-root *::before, #dashboard-root *::after { box-sizing: border-box; }
+    #dashboard-root {
+      background-color: var(--bg-main); font-family: var(--font); color: var(--text-main);
+      padding: 20px; border-radius: var(--radius);
+    }
+    #dashboard-root a { color: var(--primary); }
+    #dashboard-root .shell { background-color: transparent; padding: 0; }
+    #dashboard-root .header .title { font-size: 26px; font-weight: 700; margin: 0 0 4px; }
+    #dashboard-root .header .sub { color: var(--text-muted); font-size: 1rem; margin: 0 0 24px; }
+    #dashboard-root .last-updated-bar { display: flex; align-items: center; justify-content: space-between; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+    #dashboard-root .btn-refresh { background: none; border: 1px solid var(--line); color: var(--text-main); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; }
+    #dashboard-root .btn-refresh:hover { background-color: var(--primary); border-color: var(--primary-dark); }
+    #dashboard-root .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    #dashboard-root .kpi { background-color: var(--bg-panel); border-radius: var(--radius); padding: 20px; }
+    #dashboard-root .kpi h4 { margin: 0 0 8px; font-weight: 500; color: var(--text-muted); font-size: 1rem; }
+    #dashboard-root .kpi .big { font-size: 36px; font-weight: 700; margin-bottom: 12px; }
+    #dashboard-root .kpi .pill { display: inline-block; font-size: 0.85rem; font-weight: 500; }
+    #dashboard-root .kpi .pill strong { color: var(--primary); }
+    #dashboard-root .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 24px 0; padding: 16px; background-color: var(--bg-panel); border-radius: var(--radius); }
+    #dashboard-root .controls .label { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
+    #dashboard-root .controls .select { appearance: none; background-color: var(--bg-panel-2); border: 1px solid var(--line); color: var(--text-main); border-radius: 8px; padding: 10px 30px 10px 14px; font-size: 0.9rem; background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.41 0.589966L6 5.16997L10.59 0.589966L12 1.99997L6 7.99997L0 1.99997L1.41 0.589966Z' fill='%23a9b0bc'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+    #dashboard-root .controls .btn-show-all { background-color: var(--bg-panel-2); border: 1px solid var(--line); color: var(--text-main); border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; }
+    #dashboard-root .controls .btn-show-all:hover { background-color: var(--primary); border-color: var(--primary-dark); }
+    #dashboard-root .chart-container { background-color: var(--bg-panel); border-radius: var(--radius); padding: 20px; }
+    #dashboard-root .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    #dashboard-root .panel { background-color: var(--bg-panel); border-radius: var(--radius); padding: 24px; }
+    #dashboard-root .panel-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 20px 0; }
+    #dashboard-root .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+    #dashboard-root .stat-row:last-child { border-bottom: none; }
+    #dashboard-root .stat-row .label { color: var(--text-muted); }
+    #dashboard-root .stat-row .value { font-weight: 600; }
+    #dashboard-root .stat-row .value.highlight { color: var(--primary); }
+    #dashboard-root #all-agents-card .cta-button { margin-top: 20px; width: 100%; padding: 12px; background: var(--bg-panel-2); border: 1px solid var(--line); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    #dashboard-root #all-agents-card .cta-button:hover { background-color: #2c2f36; }
+    #dashboard-root .pipeline-status-item { margin-bottom: 16px; }
+    #dashboard-root .pipeline-status-item .status-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+    #dashboard-root .pipeline-status-item .status-label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    #dashboard-root .pipeline-status-item .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+    #dashboard-root .pipeline-status-item .progress-bar { width: 100%; height: 8px; background-color: var(--bg-panel-2); border-radius: 4px; overflow: hidden; }
+    #dashboard-root .pipeline-status-item .progress-bar-inner { height: 100%; border-radius: 4px; }
+    #dashboard-root .audit-container { grid-column: 1 / -1; background-color: var(--bg-panel); border-radius: var(--radius); padding: 24px; }
+    #dashboard-root .audit-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    #dashboard-root .audit-tab { padding: 8px 16px; border-radius: 20px; background: var(--bg-element); border: 1px solid var(--line); cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+    #dashboard-root .audit-tab.active { background: var(--primary); border-color: var(--primary-dark); color: white; }
+    #dashboard-root .audit-content { display: grid; grid-template-columns: 3fr 4fr; gap: 20px; }
+    #dashboard-root .sub-panel { background-color: var(--bg-element); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+    #dashboard-root .sub-panel-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 16px; }
+    #dashboard-root .agent-perf-item { margin-bottom: 16px; border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+    #dashboard-root .agent-perf-item h5 { margin: 0 0 12px; font-size: 1rem; font-weight: 700; color: var(--primary); }
+    #dashboard-root .agent-perf-details { display: flex; gap: 20px; flex-wrap: wrap; }
+    #dashboard-root .contacts-container { grid-column: 1 / -1; background-color: var(--bg-panel); border-radius: var(--radius); padding: 24px; }
+    #dashboard-root .contacts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    #dashboard-root .contacts-search input { background-color: var(--bg-panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; color: var(--text-main); width: 250px; }
+    #dashboard-root .contacts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    #dashboard-root .contact-card { background-color: var(--bg-element); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+    #dashboard-root .contact-card .name { font-weight: 600; font-size: 1.1rem; }
+    #dashboard-root .contact-card .id { color: var(--text-muted); font-size: 0.8rem; margin: 4px 0 12px; }
+    #dashboard-root .contact-card .tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background-color: var(--primary); color: white; }
+    #dashboard-root .contact-card .btn-details { width: 100%; margin-top: 16px; padding: 10px; border: 1px solid var(--line); background-color: var(--bg-panel-2); color: var(--text-main); border-radius: 8px; cursor: pointer; }
+    #dashboard-root #load-more-contacts { display: block; margin: 24px auto 0; width: 200px; padding: 12px; background: var(--bg-panel-2); border: 1px solid var(--line); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    @media (max-width: 900px) { #dashboard-root .grid-layout, #dashboard-root .audit-content { grid-template-columns: 1fr; } }
+  `;
+
+  const dashboardHTML = `
+    <div id="wrapper">
+      <div class="shell">
+        <div class="header">
+          <h1 class="title" id="biz-name"></h1>
+          <p class="sub">Agent Performance Intelligence Suite</p>
+        </div>
+        <div class="last-updated-bar">
+          <span>Last updated on: <strong id="last-updated">—</strong></span>
+          <button class="btn-refresh" id="refresh">Refresh metrics</button>
+        </div>
+        <div class="kpis" id="kpis-grid"></div>
+        <div class="controls">
+          <span class="label">Range:</span>
+          <select class="select" id="range-select">
+            <option value="24h">Last 24 Hours</option> <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option> <option value="90d">Last 90 Days</option>
+          </select>
+          <span class="label">Metric:</span> <select class="select" id="metric-select"></select>
+          <span class="label">Agent Type:</span> <select class="select" id="agent-select"></select>
+          <span class="label">Chart:</span>
+          <select class="select" id="chart-type-select">
+            <option value="bar">Bar (vertical)</option> <option value="bar-h">Bar (horizontal)</option> <option value="line">Line</option>
+          </select>
+          <button class="btn-show-all" id="show-all-btn">Show All</button>
+        </div>
+        <div class="chart-container" id="main-chart-container"></div>
+        <div class="grid-layout">
+          <div class="panel" id="all-agents-card"></div>
+          <div class="panel" id="pipeline-status-panel"></div>
+          <div class="audit-container">
+            <h3 class="panel-title">Pipeline Audit</h3>
+            <div class="audit-tabs" id="audit-tabs"></div>
+            <div class="audit-content">
+              <div class="sub-panel" id="audit-status-overview"></div>
+              <div class="sub-panel" id="audit-agent-performance"></div>
+            </div>
+          </div>
+          <div class="contacts-container">
+            <div class="contacts-header">
+              <h3 class="panel-title">Contacts Database</h3>
+              <div class="contacts-search">
+                <input type="text" id="contact-search" placeholder="Search by name or contact ID...">
+              </div>
+            </div>
+            <div class="contacts-grid" id="contacts-grid"></div>
+            <button id="load-more-contacts">Load More Contacts</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Inject CSS into the <head>
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = dashboardCSS;
+  document.head.appendChild(styleEl);
+  
+  // Inject HTML into the container
+  container.innerHTML = dashboardHTML;
+  
+  // Add external ApexCharts script
+  if (!window.ApexCharts) {
+    const apexScript = document.createElement('script');
+    apexScript.src = 'https://cdn.jsdelivr.net/npm/apexcharts';
+    apexScript.onload = () => initializeDashboard();
+    document.head.appendChild(apexScript);
+  } else {
+    initializeDashboard();
+  }
+
+  // --- PART 2: DASHBOARD LOGIC ---
+  function initializeDashboard() {
+    // All of the original dashboard JS logic goes here.
+    // NOTE: Query selectors must now be scoped to the container.
+    const $ = s => container.querySelector(s);
+    const $$ = s => container.querySelectorAll(s);
+
+    const state = { range: '24h', metric: 'Reply %', agentType: 'All', chartType: 'bar', auditAgent: 'All Agents*' };
+    const METRICS = [
+      { label: 'Reply %', key: 'Reply %', isPct: true },
+      { label: 'Contacted → Appt/Lead %', key: 'Contacted → Appt/Lead %', isPct: true },
+      { label: 'Appt/Lead → Close %', key: 'Appt/Lead → Close %', isPct: true },
+      { label: 'Contacted → Close %', key: 'Contacted → Close %', isPct: true },
+      { label: 'Contacted', key: 'Contacted', isPct: false },
+      { label: 'Replies', key: 'Replies', isPct: false },
+      { label: 'Appointments / Leads', key: 'Appointments / Leads', isPct: false },
+      { label: 'Sold', key: 'Sold', isPct: false }
+    ];
+    const PIPELINE_COLORS = {
+      "New": "#ED6C03", "Lost": "#EF4444", "Sold": "#22C55E", "Needs Follow Up": "#F59E0B",
+      "Pipeline": "#8B5CF6", "sold b/ai": "#3B82F6", "default": "#6B7280"
+    };
+    let mainChart = null;
+
+    const fmt = n => new Intl.NumberFormat().format(Math.round(n || 0));
+    const pct = (num, den) => den > 0 ? (100 * num / den) : 0;
+    const nicePct = v => `${parseFloat(v || 0).toFixed(1)}%`;
+    const getAgentData = range => (DATA.agentsByRange?.[range] || []).filter(a => a.agent.toLowerCase() !== 'cxa').map(a => ({
+        name: a.agent,
+        Contacted: a.outbound || 0,
+        Replies: a.inbound || 0,
+        'Appointments / Leads': a.leads || 0,
+        Sold: a.sold || 0,
+    }));
+    const computeMetrics = data => ({
+        ...data,
+        'Reply %': pct(data.Replies, data.Contacted),
+        'Contacted → Appt/Lead %': pct(data['Appointments / Leads'], data.Contacted),
+        'Appt/Lead → Close %': pct(data.Sold, data['Appointments / Leads']),
+        'Contacted → Close %': pct(data.Sold, data.Contacted)
+    });
+
+    function renderHeader() {
+        $('#biz-name').textContent = DATA.company || 'Agent Performance';
+        const date = new Date(DATA.generatedAtUTC || Date.now());
+        $('#last-updated').textContent = date.toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function renderKPIs() {
+        const d = DATA.byRange?.[state.range] || {};
+        const contacted = d.messages?.outbound || 0;
+        const replies = d.messages?.inbound || 0;
+        const leads = d.leads || 0;
+        const sold = d.sold || 0;
+        const kpiData = [
+            { title: 'Prospects contacted', big: fmt(contacted), pill: `Reply %: <strong>${nicePct(pct(replies, contacted))}</strong>` },
+            { title: 'Replies', big: fmt(replies) },
+            { title: 'Appointments / Leads', big: fmt(leads), pill: `Contacted → Appt/Lead %: <strong>${nicePct(pct(leads, contacted))}</strong>` },
+            { title: 'Contacted → Close %', big: `${nicePct(pct(sold, contacted))}`, pill: `Sold: <strong>${fmt(sold)}</strong>` }
+        ];
+        $('#kpis-grid').innerHTML = kpiData.map(k => `<div class="kpi"><h4>${k.title}</h4><div class="big">${k.big}</div>${k.pill ? `<div class="pill">${k.pill}</div>` : ''}</div>`).join('');
+    }
+
+    function renderMainChart() {
+        const allAgents = getAgentData(state.range).map(computeMetrics);
+        const selectedMetric = METRICS.find(m => m.label === state.metric);
+        let seriesData, categories;
+        if (state.agentType === 'All') {
+            categories = allAgents.map(a => a.name);
+            seriesData = [{ name: selectedMetric.label, data: allAgents.map(a => a[selectedMetric.key] || 0) }];
+        } else {
+            const agent = allAgents.find(a => a.name === state.agentType);
+            if (agent) {
+                categories = ['Contacted', 'Replies', 'Appt/Leads', 'Sold'];
+                seriesData = [{ name: agent.name, data: [agent.Contacted, agent.Replies, agent['Appointments / Leads'], agent.Sold] }];
+            } else { categories = []; seriesData = []; }
+        }
+        const VAR = { primary: '#ed6c03', line: '#2b2f36', text_muted: '#a9b0bc' };
+        const options = {
+            series: seriesData,
+            chart: { type: state.chartType === 'line' ? 'line' : 'bar', height: 350, toolbar: { show: false }, parentHeightOffset: 0 },
+            plotOptions: { bar: { horizontal: state.chartType === 'bar-h', borderRadius: 6, columnWidth: '55%' } },
+            dataLabels: { enabled: false }, stroke: { curve: 'smooth', width: 3 }, colors: [VAR.primary],
+            grid: { borderColor: VAR.line, strokeDashArray: 4 },
+            xaxis: { categories: categories, labels: { style: { colors: VAR.text_muted } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: VAR.text_muted }, formatter: val => selectedMetric.isPct ? `${Math.round(val)}%` : fmt(val) } },
+            tooltip: { theme: 'dark' }
+        };
+        if (mainChart) mainChart.destroy();
+        mainChart = new ApexCharts($('#main-chart-container'), options);
+        mainChart.render();
+    }
+
+    function renderAllAgentsCard() {
+        const agents = getAgentData(state.range);
+        const totals = agents.reduce((acc, curr) => {
+            Object.keys(curr).forEach(key => { if (key !== 'name') acc[key] = (acc[key] || 0) + curr[key]; });
+            return acc;
+        }, {});
+        const totalsWithMetrics = computeMetrics(totals);
+        const stats = [
+            { label: 'Contacted', value: fmt(totalsWithMetrics.Contacted) }, { label: 'Replies', value: fmt(totalsWithMetrics.Replies) },
+            { label: 'Appointments / Leads', value: fmt(totalsWithMetrics['Appointments / Leads']) }, { label: 'Sold', value: fmt(totalsWithMetrics.Sold) },
+            { label: 'Reply %', value: nicePct(totalsWithMetrics['Reply %']), highlight: true },
+            { label: 'Contacted → Appt/Lead %', value: nicePct(totalsWithMetrics['Contacted → Appt/Lead %']), highlight: true },
+            { label: 'Appt/Lead → Close %', value: nicePct(totalsWithMetrics['Appt/Lead → Close %']), highlight: true }
+        ];
+        $('#all-agents-card').innerHTML = `<h3 class="panel-title">All Agents*</h3>${stats.map(s => `<div class="stat-row"><span class="label">${s.label}</span><span class="value ${s.highlight ? 'highlight' : ''}">${s.value}</span></div>`).join('')}<button class="cta-button">View contacts</button>`;
+    }
+
+    function renderPipelineStatus() {
+        const statuses = DATA.auditStatusTotals || [];
+        const total = statuses.reduce((sum, s) => sum + s.Count, 0);
+        $('#pipeline-status-panel').innerHTML = `<h3 class="panel-title">Pipeline Status</h3><div id="pipeline-status-list">${statuses.map(s => `<div class="pipeline-status-item"><div class="status-header"><span class="status-label"><span class="status-dot" style="background-color: ${PIPELINE_COLORS[s.Status] || PIPELINE_COLORS.default};"></span> ${s.Status}</span><span><strong>${fmt(s.Count)}</strong> (${nicePct(pct(s.Count, total))})</span></div><div class="progress-bar"><div class="progress-bar-inner" style="width: ${pct(s.Count, total)}%; background-color: ${PIPELINE_COLORS[s.Status] || PIPELINE_COLORS.default};"></div></div></div>`).join('')}</div><div class="stat-row" style="padding-top: 16px;"><span class="label">Total Contacts</span><span class="value">${fmt(total)}</span></div>`;
+    }
+
+    function renderAudit() {
+        const agents = ['All Agents*', ...getAgentData(state.range).map(a => a.name)];
+        $('#audit-tabs').innerHTML = agents.map(name => `<div class="audit-tab ${name === state.auditAgent ? 'active' : ''}" data-agent="${name}">${name}</div>`).join('');
+        const allStatuses = DATA.auditStatusTotals || [];
+        $('#audit-status-overview').innerHTML = `<h4 class="sub-panel-title">Status Overview</h4>${allStatuses.map(s => `<div class="stat-row"><span class="label">${s.Status}</span><span class="value">${fmt(s.Count)}</span></div>`).join('')}<div class="stat-row" style="font-weight: 700;"><span class="label">Total</span><span class="value">${fmt(allStatuses.reduce((sum, s) => sum + s.Count, 0))}</span></div>`;
+        const agentPerfs = DATA.auditByAgent || [];
+        $('#audit-agent-performance').innerHTML = `<h4 class="sub-panel-title">Agent Performance</h4>${agentPerfs.map(ap => `<div class="agent-perf-item"><h5>${ap.agent}</h5><div class="agent-perf-details">${ap.totals.map(t => `<span>${t.Status}: <strong>${fmt(t.Count)}</strong></span>`).join('')}</div></div>`).join('')}`;
+    }
+    
+    function renderContacts() {
+        const contacts = DATA.allContacts || [];
+        const query = $('#contact-search').value.toLowerCase();
+        const filtered = contacts.filter(c => c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query));
+        $('#contacts-grid').innerHTML = filtered.slice(0, 10).map(c => `<div class="contact-card"><div class="name">${c.name}</div><div class="id">ID: ${c.id}</div>${c.tag ? `<div class="tag">${c.tag}</div>` : ''}<button class="btn-details">View Details</button></div>`).join('');
+    }
+
+    function init() {
+        $('#metric-select').innerHTML = METRICS.map(m => `<option>${m.label}</option>`).join('');
+        const agentNames = ['All', ...getAgentData(state.range).map(a => a.name)];
+        $('#agent-select').innerHTML = agentNames.map(name => `<option value="${name}">${name}</option>`).join('');
+        renderHeader(); renderKPIs(); renderMainChart(); renderAllAgentsCard();
+        renderPipelineStatus(); renderAudit(); renderContacts();
+        
+        $('#refresh').addEventListener('click', () => { init(); }); // Re-run init instead of reloading page
+        $('#range-select').addEventListener('change', e => { state.range = e.target.value; renderKPIs(); renderAllAgentsCard(); renderMainChart(); });
+        $('#metric-select').addEventListener('change', e => { state.metric = e.target.value; renderMainChart(); });
+        $('#agent-select').addEventListener('change', e => { state.agentType = e.target.value; renderMainChart(); });
+        $('#chart-type-select').addEventListener('change', e => { state.chartType = e.target.value; renderMainChart(); });
+        $('#show-all-btn').addEventListener('click', () => { state.agentType = 'All'; $('#agent-select').value = 'All'; renderMainChart(); });
+        $('#audit-tabs').addEventListener('click', e => { if (e.target.classList.contains('audit-tab')) { state.auditAgent = e.target.dataset.agent; renderAudit(); } });
+        $('#contact-search').addEventListener('input', renderContacts);
+    }
+    
+    init();
+  }
+})();
+</script>
