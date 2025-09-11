@@ -4,380 +4,346 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Agent Performance Dashboard (v1.1)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <style>
-    :root {
-      --bg-main: #0f1115;
-      --bg-panel: #17191e;
-      --bg-panel-2: #21242b;
-      --bg-element: #101215;
-      --line: #2b2f36;
-      --text-main: #f4f6fb; /* brighter */
-      --text-muted: #c5c9d3; /* lighter for readability */
-      --primary: #ed6c03;
-      --primary-dark: #b94f00;
-      --radius: 12px;
-      --font: 'Outfit', sans-serif;
-      --shadow: 0 8px 32px rgba(0,0,0,.25);
-      --green: #22c55e;
-      --red: #ef4444;
-      --amber: #f59e0b;
-      --purple: #8b5cf6;
-      --blue: #3b82f6;
+    :root{
+      --bg-main:#0f1115;--bg-panel:#17191e;--bg-panel-2:#21242b;--bg-element:#101215;
+      --line:#2b2f36;--text-main:#f4f6fb;--text-muted:#b8bfca;--primary:#ed6c03;--primary-dark:#b94f00;
+      --accent-1:#3b82f6;--accent-2:#10b981;--accent-3:#f59e0b;--accent-4:#ef4444;
+      --radius:12px;--font:'Outfit',sans-serif;--shadow:0 8px 32px rgba(0,0,0,.25)
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg-main); color: var(--text-main); font-family: var(--font); overflow: visible; }
-    #wrapper { max-width: 1200px; margin: 32px auto; padding: 0 20px; }
+    *,*:before,*:after{box-sizing:border-box}
+    html,body{background:var(--bg-main);margin:0;font-family:var(--font);color:var(--text-main)}
+    /* Let the iframe grow — no internal scrollbars */
+    html,body{height:auto;overflow:visible}
 
-    .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .title { font-size: 26px; font-weight: 700; margin: 0; }
-    .sub { margin: 4px 0 0; color: var(--text-muted); font-size: 0.95rem; }
-    .header-right { display:flex; gap:8px; align-items:center; }
-    .pill { background: var(--bg-panel-2); border: 1px solid var(--line); color: var(--text-main); border-radius: 999px; padding: 8px 12px; font-weight: 600; font-size: 0.85rem; }
-    .btn { background: var(--bg-panel-2); border: 1px solid var(--line); color: var(--text-main); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 600; }
-    .btn:hover { background: var(--primary); border-color: var(--primary-dark); }
+    #wrapper{max-width:1200px;margin:28px auto;padding:0 20px}
+    .header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .title{font-size:24px;font-weight:700;margin:0}
+    .updated{color:var(--text-muted);font-size:.9rem}
+    .pill{background:var(--bg-panel-2);border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-weight:600}
 
-    .controls { margin: 16px 0 12px; padding: 12px; background: var(--bg-panel); border-radius: var(--radius); display: grid; grid-template-columns: auto auto 1fr auto auto; gap: 8px 12px; align-items: center; }
-    .controls .label { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
-    .select { appearance: none; background: var(--bg-panel-2); border: 1px solid var(--line); color: var(--text-main); border-radius: 8px; padding: 10px 34px 10px 12px; font-size: 0.9rem; background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.41 0.59L6 5.17 10.59 0.59 12 2 6 8 0 2 1.41 0.59Z' fill='%23c5c9d3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+    .toolbar{margin:14px 0 18px;background:var(--bg-panel);border-radius:var(--radius);padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px}
+    .ctrl{display:flex;flex-direction:column;gap:6px}
+    .label{color:var(--text-muted);font-size:.8rem;font-weight:600}
+    select,button{appearance:none;background:var(--bg-panel-2);border:1px solid var(--line);color:var(--text-main);border-radius:10px;padding:10px 12px;font-size:.92rem}
+    .btn{cursor:pointer;font-weight:600}
+    .btn:hover{background:var(--primary);border-color:var(--primary-dark)}
 
-    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 12px 0 10px; }
-    .kpi { background: var(--bg-panel); border-radius: var(--radius); padding: 16px; }
-    .kpi h4 { margin: 0 0 6px; font-weight: 600; color: var(--text-muted); font-size: 0.95rem; }
-    .kpi .big { font-size: 32px; font-weight: 800; }
-    .kpi .pillline { margin-top: 8px; font-size: 0.9rem; color: var(--text-muted); }
-    .kpi .pillline strong { color: var(--primary); }
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .kpi{background:var(--bg-panel);border-radius:var(--radius);padding:18px}
+    .kpi h4{margin:0 0 8px;color:var(--text-muted);font-size:.95rem;font-weight:600}
+    .big{font-size:32px;font-weight:800}
+    .subpill{margin-top:6px;color:var(--text-muted);font-size:.9rem}
+    .subpill strong{color:var(--primary)}
 
-    .chart-panel { background: var(--bg-panel); border-radius: var(--radius); padding: 16px; }
+    .panel{background:var(--bg-panel);border-radius:var(--radius);padding:20px;margin-top:16px}
+    .panel-title{margin:0 0 12px;font-weight:700}
 
-    .grid-bottom { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 14px; }
-    .panel { background: var(--bg-panel); border-radius: var(--radius); padding: 16px; }
-    .panel-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 12px; }
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
-    .pipeline-status-item { margin: 10px 0; }
-    .status-header { display:flex; justify-content: space-between; font-size: 0.92rem; }
-    .status-label { display:flex; align-items:center; gap:8px; color: var(--text-main);} 
-    .status-dot { width:10px; height:10px; border-radius:50%; }
-    .progress { width:100%; height:8px; background: var(--bg-panel-2); border-radius: 4px; overflow: hidden; margin-top:6px; }
-    .progress > div { height:100%; border-radius:4px; }
+    /* Pipeline list bars */
+    .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+    .row:last-child{border-bottom:none}
+    .row .bar{height:8px;background:var(--bg-panel-2);border-radius:4px;flex:1;margin:0 10px;overflow:hidden}
+    .row .bar > span{display:block;height:100%;background:var(--accent-1)}
 
-    @media (max-width: 900px) { .kpis { grid-template-columns: 1fr 1fr; } .controls { grid-template-columns: 1fr 1fr 1fr; } }
+    /* Full-screen loading spinner */
+    .loading-cover{position:fixed;inset:0;background:rgba(15,17,21,.9);display:none;align-items:center;justify-content:center;z-index:9999}
+    .spinner{width:84px;height:84px;border-radius:50%;border:6px solid rgba(237,108,3,.18);border-top-color:var(--primary);box-shadow:0 0 24px rgba(237,108,3,.45), inset 0 0 18px rgba(237,108,3,.35);animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* Spinner overlay */
-    .spinner-overlay { position: fixed; inset: 0; background: rgba(15,17,21,.85); display: none; place-items: center; z-index: 9999; backdrop-filter: blur(2px); }
-    .spinner { width: 96px; height: 96px; border-radius: 50%; border: 6px solid rgba(237,108,3,.2); border-top-color: var(--primary); animation: spin 1s linear infinite; box-shadow: 0 0 24px rgba(237,108,3,.55), inset 0 0 12px rgba(237,108,3,.35); }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
+    @media(max-width:980px){
+      .kpis{grid-template-columns:1fr 1fr}
+      .two-col{grid-template-columns:1fr}
+      .toolbar{grid-template-columns:1fr 1fr;gap:12px}
+    }
   </style>
 </head>
 <body>
 <div id="wrapper">
   <div class="header">
-    <div>
-      <h1 class="title" id="biz-name">—</h1>
-      <p class="sub">Last updated on: <strong id="last-updated">—</strong></p>
+    <h1 class="title" id="biz-name">—</h1>
+    <span class="pill" id="agent-pill" style="display:none"></span>
+    <span class="updated" id="last-updated">Last updated: —</span>
+    <button class="btn" id="refresh" style="margin-left:auto">Refresh metrics</button>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <div class="ctrl"><span class="label">Range</span>
+      <select id="range-select">
+        <option value="24h">Last 24 Hours</option>
+        <option value="7d">Last 7 Days</option>
+        <option value="30d">Last 30 Days</option>
+        <option value="90d">Last 90 Days</option>
+      </select>
     </div>
-    <div class="header-right">
-      <span class="pill" id="agent-pill">Agent: All</span>
-      <button id="refresh" class="btn">Refresh metrics</button>
+    <div class="ctrl"><span class="label">Metric</span>
+      <select id="metric-select"></select>
+    </div>
+    <div class="ctrl"><span class="label">Agent</span>
+      <select id="agent-select"></select>
+    </div>
+    <div class="ctrl"><span class="label">Quick</span>
+      <button id="show-all-btn" class="btn">Show All</button>
+    </div>
+    <div class="ctrl"><span class="label">Chart</span>
+      <select id="chart-type-select">
+        <option value="funnel">Funnel</option>
+        <option value="bar">Bar (vertical)</option>
+        <option value="bar-h">Bar (horizontal)</option>
+        <option value="donut">Donut</option>
+        <option value="line">Line</option>
+      </select>
     </div>
   </div>
 
-  <div class="controls" id="controls">
-    <span class="label">Range</span>
-    <select id="range-select" class="select">
-      <option value="24h">Last 24 Hours</option>
-      <option value="7d">Last 7 Days</option>
-      <option value="30d">Last 30 Days</option>
-      <option value="90d">Last 90 Days</option>
-    </select>
-
-    <span class="label">Metric</span>
-    <select id="metric-select" class="select"></select>
-
-    <span class="label">Agent</span>
-    <select id="agent-select" class="select"></select>
-
-    <button id="show-all" class="btn">Show All</button>
-
-    <span class="label">Chart</span>
-    <select id="chart-type-select" class="select">
-      <option value="funnel">Funnel</option>
-      <option value="bar">Bar (vertical)</option>
-      <option value="bar-h">Bar (horizontal)</option>
-      <option value="donut">Donut</option>
-    </select>
+  <div class="kpis">
+    <div class="kpi"><h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div><div class="subpill" id="kpi-1"></div></div>
+    <div class="kpi"><h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="subpill">Reply %: <strong id="kpi-reply-pct">0.0%</strong></div></div>
+    <div class="kpi"><h4>Appointments / Leads</h4><div class="big" id="kpi-leads">0</div><div class="subpill">Contacted → Appt/Lead %: <strong id="kpi-cta-pct">0.0%</strong></div></div>
+    <div class="kpi"><h4>Closed</h4><div class="big" id="kpi-sold">0</div><div class="subpill">Appt/Lead → Close %: <strong id="kpi-close-pct">0.0%</strong></div></div>
   </div>
 
-  <div class="kpis" id="kpis-grid"></div>
+  <div class="panel">
+    <div id="main-chart" style="min-height:360px"></div>
+  </div>
 
-  <div class="chart-panel" id="main-chart"></div>
-
-  <div class="grid-bottom">
-    <div class="panel" id="pipeline-status"></div>
+  <div class="panel">
+    <h3 class="panel-title" id="pipe-title">Pipeline Status</h3>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+      <span class="label">View as</span>
+      <select id="pipe-view" style="width:180px">
+        <option value="bars">Horizontal bars</option>
+        <option value="donut">Donut</option>
+      </select>
+    </div>
+    <div id="pipeline-chart" style="min-height:320px"></div>
+    <div id="pipeline-list"></div>
   </div>
 </div>
 
-<!-- Spinner overlay -->
-<div class="spinner-overlay" id="loading-overlay"><div class="spinner"></div></div>
+<!-- Loading overlay -->
+<div class="loading-cover" id="loading">
+  <div class="spinner"></div>
+</div>
 
 <script>
 (function(){
+  // ------- helpers
   const $ = s => document.querySelector(s);
   const fmt = n => new Intl.NumberFormat().format(Math.round(n||0));
-  const pct = (num, den) => den > 0 ? (100 * (num||0) / den) : 0;
-  const nicePct = v => `${(v||0).toFixed(1)}%`;
-  const VAR = {
-    primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
-    line: getComputedStyle(document.documentElement).getPropertyValue('--line').trim(),
-    textMuted: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim(),
+  const pct = (a,b) => b>0 ? (100*a/b) : 0;
+  const nicePct = v => `${parseFloat(v||0).toFixed(1)}%`;
+  const VAR={primary:getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), line:getComputedStyle(document.documentElement).getPropertyValue('--line').trim(), muted:getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim()};
+
+  // ------- state
+  let DATA={};
+  const state={range:'24h', metric:'Reply %', agentType:'All', chartType:'funnel'};
+  let chart=null, pipeChart=null;
+
+  const METRICS=[
+    {label:'Reply %',key:'Reply %',isPct:true, tip:(a)=>`Reply % = Replies / Contacted`},
+    {label:'Contacted → Appt/Lead %',key:'Contacted → Appt/Lead %',isPct:true, tip:()=>`Appt/Lead % = Leads / Contacted`},
+    {label:'Appt/Lead → Close %',key:'Appt/Lead → Close %',isPct:true, tip:()=>`Close % = Sold / Leads`},
+    {label:'Contacted',key:'Contacted',isPct:false},
+    {label:'Replies',key:'Replies',isPct:false},
+    {label:'Appointments / Leads',key:'Appointments / Leads',isPct:false},
+    {label:'Sold',key:'Sold',isPct:false}
+  ];
+  const PIPELINE_COLORS={
+    'New':'#ED6C03','Lost':'#EF4444','Sold':'#22C55E','Needs Follow Up':'#F59E0B','Pipeline':'#8B5CF6','Service':'#60A5FA','Unchecked':'#9CA3AF','Bad Lead':'#A78BFA','default':'#6B7280'
   };
 
-  let DATA = {};
-  const state = { range: '24h', metric: 'Reply %', agentType: 'All', chartType: 'funnel' };
-  let chart = null;
+  // ------- data transforms
+  const getAgentRows = (range) => (DATA.agentsByRange?.[range]||[]).filter(a=>a.agent && a.agent.toLowerCase()!=='cxa').map(a=>({
+    name:a.agent, Contacted:a.outbound||0, Replies:a.inbound||0, 'Appointments / Leads':a.leads||0, Sold:a.sold||0
+  }));
+  const withMetrics = o => ({
+    ...o,
+    'Reply %': pct(o.Replies,o.Contacted),
+    'Contacted → Appt/Lead %': pct(o['Appointments / Leads'], o.Contacted),
+    'Appt/Lead → Close %': pct(o.Sold, o['Appointments / Leads'])
+  });
+  const aggregate = rows => rows.reduce((acc,r)=>{['Contacted','Replies','Appointments / Leads','Sold'].forEach(k=>acc[k]=(acc[k]||0)+(r[k]||0));return acc;},{Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0});
 
-  const METRICS = [
-    { label:'Reply %', key:'Reply %', isPct:true, calc:(a)=>pct(a.Replies, a.Contacted), desc: 'Reply % = Replies / Contacted' },
-    { label:'Contacted', key:'Contacted', isPct:false, calc:(a)=>a.Contacted||0, desc:'Total Contacted' },
-    { label:'Replies', key:'Replies', isPct:false, calc:(a)=>a.Replies||0, desc:'Total Replies' },
-    { label:'Appointments / Leads', key:'Appointments / Leads', isPct:false, calc:(a)=>a['Appointments / Leads']||0, desc:'Total Leads' },
-    { label:'Contacted → Appt/Lead %', key:'Contacted → Appt/Lead %', isPct:true, calc:(a)=>pct(a['Appointments / Leads'], a.Contacted), desc:'Leads / Contacted' },
-    { label:'Appt/Lead → Close %', key:'Appt/Lead → Close %', isPct:true, calc:(a)=>pct(a.Sold, a['Appointments / Leads']), desc:'Sold / Leads' },
-    { label:'Contacted → Close %', key:'Contacted → Close %', isPct:true, calc:(a)=>pct(a.Sold, a.Contacted), desc:'Sold / Contacted' }
-  ];
-
-  const PIPELINE_COLORS = { 'New':'#ED6C03', 'Lost':'#EF4444', 'Sold':'#22C55E', 'Needs Follow Up':'#F59E0B', 'Pipeline':'#8B5CF6', 'Service':'#60A5FA', 'Unchecked':'#9CA3AF', 'Bad Lead':'#eab308', 'Flag':'#94a3b8', 'default':'#6B7280' };
-
-  function getAgents(range){
-    return (DATA.agentsByRange?.[range]||[]).filter(a => a.agent && a.agent.toLowerCase()!=='cxa').map(a => ({
-      name: a.agent,
-      Contacted: a.outbound||0,
-      Replies: a.inbound||0,
-      'Appointments / Leads': a.leads||0,
-      Sold: a.sold||0
-    }));
+  // ------- UI setup
+  function populateSelectors(){
+    $('#metric-select').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
+    const names=['All',...getAgentRows(state.range).map(a=>a.name)];
+    $('#agent-select').innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
+    $('#chart-type-select').value = state.chartType;
   }
 
-  function aggregate(list){
-    return list.reduce((acc, a)=>({
-      Contacted: (acc.Contacted||0) + (a.Contacted||0),
-      Replies: (acc.Replies||0) + (a.Replies||0),
-      'Appointments / Leads': (acc['Appointments / Leads']||0) + (a['Appointments / Leads']||0),
-      Sold: (acc.Sold||0) + (a.Sold||0)
-    }), {});
-  }
-
-  function computed(a){
-    const base = { ...a };
-    METRICS.forEach(m => { if(m.isPct) base[m.key] = m.calc(a); });
-    return base;
-  }
-
-  // ---------- RENDERERS ----------
   function renderHeader(){
     $('#biz-name').textContent = DATA.company || '—';
-    const date = new Date(DATA.generatedAtUTC || Date.now());
-    $('#last-updated').textContent = date.toLocaleString('en-US', { month:'numeric', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
-  }
-
-  function renderControls(){
-    // metrics
-    $('#metric-select').innerHTML = METRICS.map(m=>`<option value="${m.label}">${m.label}</option>`).join('');
-    $('#metric-select').value = state.metric;
-    // agents
-    const names = ['All', ...getAgents(state.range).map(a=>a.name)];
-    $('#agent-select').innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
-    $('#agent-select').value = state.agentType;
-    // chart
-    $('#chart-type-select').value = state.chartType;
-    $('#agent-pill').textContent = `Agent: ${state.agentType}`;
+    const d = new Date(DATA.generatedAtUTC || Date.now());
+    $('#last-updated').textContent = `Last updated on: ${d.toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}`;
+    $('#agent-pill').style.display = state.agentType==='All' ? 'none' : 'inline-flex';
+    if(state.agentType!=='All') $('#agent-pill').textContent = `Agent: ${state.agentType}`;
   }
 
   function renderKPIs(){
-    const list = getAgents(state.range);
-    const totals = state.agentType==='All' ? aggregate(list) : (list.find(a=>a.name===state.agentType) || {});
-    const t = computed(totals);
-
-    const k = [
-      { title:'Prospects contacted', big: fmt(t.Contacted||0), pill:'' },
-      { title:'Replies', big: fmt(t.Replies||0), pill:`Reply %: <strong>${nicePct(pct(t.Replies, t.Contacted))}</strong>` },
-      { title:'Appointments / Leads', big: fmt(t['Appointments / Leads']||0), pill:`Contacted → Appt/Lead %: <strong>${nicePct(pct(t['Appointments / Leads'], t.Contacted))}</strong>` },
-      { title:'Closed', big: fmt(t.Sold||0), pill:`Appt/Lead → Close %: <strong>${nicePct(pct(t.Sold, t['Appointments / Leads']))}</strong>` }
-    ];
-
-    $('#kpis-grid').innerHTML = k.map(x=>`
-      <div class="kpi">
-        <h4>${x.title}</h4>
-        <div class="big">${x.big}</div>
-        ${x.pill ? `<div class="pillline">${x.pill}</div>` : ''}
-      </div>
-    `).join('');
+    const r = DATA.byRange?.[state.range] || {}; const contacted=r.messages?.outbound||0; const replies=r.messages?.inbound||0; const leads=r.leads||0; const sold=r.sold||0;
+    $('#kpi-contacted').textContent = fmt(contacted);
+    $('#kpi-replies').textContent = fmt(replies);
+    $('#kpi-leads').textContent = fmt(leads);
+    $('#kpi-sold').textContent = fmt(sold);
+    $('#kpi-reply-pct').textContent = nicePct(pct(replies,contacted));
+    $('#kpi-cta-pct').textContent = nicePct(pct(leads,contacted));
+    $('#kpi-close-pct').textContent = nicePct(pct(sold,leads));
   }
 
-  function tooltipCalc(metricLabel, a){
-    switch(metricLabel){
-      case 'Reply %': return `Reply % = Replies / Contacted = ${fmt(a.Replies)} / ${fmt(a.Contacted)}`;
-      case 'Contacted → Appt/Lead %': return `Leads / Contacted = ${fmt(a['Appointments / Leads'])} / ${fmt(a.Contacted)}`;
-      case 'Appt/Lead → Close %': return `Sold / Leads = ${fmt(a.Sold)} / ${fmt(a['Appointments / Leads'])}`;
-      case 'Contacted → Close %': return `Sold / Contacted = ${fmt(a.Sold)} / ${fmt(a.Contacted)}`;
-      default: return '';
-    }
-  }
-
+  // ------- main chart
   function renderChart(){
-    const list = getAgents(state.range).map(computed);
-    const metric = METRICS.find(m=>m.label===state.metric);
+    const rows = getAgentRows(state.range).map(withMetrics);
+    const metric = METRICS.find(m=>m.label===state.metric) || METRICS[0];
 
-    // when a specific agent is selected, show the 4-step funnel counts for that agent as a line/funnel series
-    if (state.agentType !== 'All'){
-      const a = list.find(x=>x.name===state.agentType) || {Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0};
-      const labels = ['Contacted','Replies','ApptLeads','Sold'];
-      const counts = [a.Contacted||0, a.Replies||0, a['Appointments / Leads']||0, a.Sold||0];
+    let categories=[], series=[];
+    let type = state.chartType;
 
-      if (state.chartType==='donut'){
-        const options = {
-          series: counts,
-          chart: { type:'donut', height: 380 },
-          labels, colors:['#60a5fa','#10b981','#fbbf24','#ef4444'],
-          legend:{ labels:{ colors: VAR.textMuted } },
-          dataLabels:{ formatter: (v)=>`${v.toFixed(1)}%` },
-          tooltip:{ theme:'dark', y:{ formatter:(val, {seriesIndex})=> `${fmt(val)} (${nicePct(pct(val, counts.reduce((s,x)=>s+x,0)))})` } },
-          grid:{ borderColor: VAR.line }
-        };
-        if (chart) chart.destroy(); chart = new ApexCharts($('#main-chart'), options); chart.render(); return;
+    // When only one category available, avoid a flat line
+    const hasMany = rows.length>1;
+    if(type==='line' && !hasMany) type='funnel';
+
+    if(state.agentType==='All'){
+      categories = rows.map(r=>r.name);
+      if(type==='funnel'){
+        const steps=['Contacted','Replies','Appointments / Leads','Sold'];
+        series = steps.map((step,idx)=>({name:step, data: rows.map(r=> r[step]||0)}));
+      }else{
+        series=[{name:metric.label, data: rows.map(r=> r[metric.key]||0)}];
       }
-
-      if (state.chartType==='funnel'){
-        const options = {
-          series: [{ data: counts }],
-          chart: { type:'bar', height: 380, toolbar:{show:false} },
-          plotOptions: { bar: { horizontal:true, borderRadius:6 } },
-          xaxis: { categories: labels, labels:{ style:{ colors: VAR.textMuted } }, axisBorder:{show:false}, axisTicks:{show:false} },
-          colors:['#60a5fa','#10b981','#fbbf24','#ef4444'],
-          dataLabels: { enabled:true, formatter:(val, {dataPointIndex})=> {
-            const prev = dataPointIndex===0 ? counts[0] : counts[dataPointIndex-1];
-            const step = pct(val, prev>0?prev:val);
-            return `${fmt(val)} (${nicePct(step)})`;
-          } },
-          tooltip: { theme:'dark', y:{ formatter:(val, {dataPointIndex})=>{
-            const prev = dataPointIndex===0 ? counts[0] : counts[dataPointIndex-1];
-            const step = pct(val, prev>0?prev:val);
-            return `Funnel: ${fmt(val)} — step conv ${nicePct(step)} = ${fmt(val)} / ${fmt(prev)}`;
-          } } },
-          grid:{ borderColor: VAR.line }
-        };
-        if (chart) chart.destroy(); chart = new ApexCharts($('#main-chart'), options); chart.render(); return;
-      }
-
-      // bar variants for a single agent: show the four counts
-      const options = {
-        series: [{ name: state.agentType, data: counts }],
-        chart:{ type: state.chartType==='bar-h' ? 'bar' : 'bar', height: 380, toolbar:{show:false} },
-        plotOptions:{ bar:{ horizontal: state.chartType==='bar-h', borderRadius:6, columnWidth:'55%' } },
-        colors:[VAR.primary],
-        xaxis:{ categories: labels, labels:{ style:{ colors: VAR.textMuted } }, axisBorder:{show:false}, axisTicks:{show:false} },
-        dataLabels:{ enabled:false },
-        grid:{ borderColor: VAR.line },
-        tooltip:{ theme:'dark' }
-      };
-      if (chart) chart.destroy(); chart = new ApexCharts($('#main-chart'), options); chart.render(); return;
-    }
-
-    // All agents selected: chart per agent for selected metric
-    const categories = list.map(a=>a.name);
-    const values = list.map(a=> metric.isPct ? metric.calc(a) : (a[metric.key]||0));
-
-    if (state.chartType==='donut'){
-      const options = { series: values, chart:{ type:'donut', height:380 }, labels: categories, legend:{ labels:{ colors: VAR.textMuted } }, dataLabels:{ formatter:v=>`${v.toFixed(1)}%` }, colors:[VAR.primary,'#60a5fa','#10b981','#fbbf24','#ef4444','#8b5cf6','#3b82f6'], grid:{ borderColor: VAR.line }, tooltip:{ theme:'dark', y:{ formatter:(val)=> metric.isPct ? nicePct(val) : fmt(val) } } };
-      if (chart) chart.destroy(); chart = new ApexCharts($('#main-chart'), options); chart.render(); return;
-    }
-
-    // bars across agents
-    const options = {
-      series: [{ name: metric.label, data: values }],
-      chart: { type: state.chartType==='bar-h' ? 'bar' : 'bar', height: 380, toolbar:{ show:false } },
-      plotOptions: { bar: { horizontal: state.chartType==='bar-h', borderRadius: 6, columnWidth: '55%' } },
-      dataLabels: { enabled:false },
-      stroke: { width: 0 },
-      colors:[VAR.primary],
-      grid: { borderColor: VAR.line, strokeDashArray: 4 },
-      xaxis: { categories, labels: { style: { colors: VAR.textMuted } }, axisBorder:{show:false}, axisTicks:{show:false} },
-      yaxis: { labels: { style: { colors: VAR.textMuted }, formatter: v => metric.isPct ? `${Math.round(v)}%` : fmt(v) } },
-      tooltip: { theme:'dark', y: { formatter: val => metric.isPct ? nicePct(val) : fmt(val) } }
-    };
-    if (chart) chart.destroy(); chart = new ApexCharts($('#main-chart'), options); chart.render();
-  }
-
-  function renderPipeline(){
-    const container = $('#pipeline-status');
-    let rows = [];
-    if (state.agentType==='All'){
-      const totals = (DATA.auditStatusTotals||[]);
-      const totalCount = totals.reduce((s,x)=>s+(x.Count||0),0);
-      rows = totals.map(s=>({ label:s.Status, count:s.Count||0, pct: pct(s.Count, totalCount) }));
-      container.querySelector('.panel-title')?.remove();
-      container.innerHTML = `<h3 class="panel-title">Pipeline Status</h3>${rows.map(r=>
-        `<div class="pipeline-status-item">
-           <div class="status-header">
-             <span class="status-label"><span class="status-dot" style="background:${PIPELINE_COLORS[r.label]||PIPELINE_COLORS.default}"></span>${r.label}</span>
-             <span>${fmt(r.count)} (${nicePct(r.pct)})</span>
-           </div>
-           <div class="progress"><div style="width:${r.pct}%; background:${PIPELINE_COLORS[r.label]||PIPELINE_COLORS.default}"></div></div>
-         </div>`).join('')}
-         <div class="status-header" style="margin-top:10px"><span>Total Contacts:</span><span>${fmt(totalCount)}</span></div>`;
     } else {
-      const agentPerf = (DATA.auditByAgent||[]).find(x=>x.agent===state.agentType);
-      const totals = agentPerf?.totals||[];
-      const totalCount = totals.reduce((s,x)=>s+(x.Count||0),0);
-      rows = totals.map(s=>({ label:s.Status, count:s.Count||0, pct: pct(s.Count, totalCount) }));
-      container.innerHTML = `<h3 class="panel-title">Pipeline Status — ${state.agentType}</h3>${rows.map(r=>
-        `<div class="pipeline-status-item">
-           <div class="status-header">
-             <span class="status-label"><span class="status-dot" style="background:${PIPELINE_COLORS[r.label]||PIPELINE_COLORS.default}"></span>${r.label}</span>
-             <span>${fmt(r.count)} (${nicePct(r.pct)})</span>
-           </div>
-           <div class="progress"><div style="width:${r.pct}%; background:${PIPELINE_COLORS[r.label]||PIPELINE_COLORS.default}"></div></div>
-         </div>`).join('')}
-         <div class="status-header" style="margin-top:10px"><span>Total Contacts:</span><span>${fmt(totalCount)}</span></div>`;
+      const r = rows.find(x=>x.name===state.agentType) || withMetrics({Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0});
+      if(type==='funnel'){
+        categories=['Contacted','Replies','ApptLeads','Sold'];
+        series=[{ name:'Funnel', data:[r.Contacted,r.Replies,r['Appointments / Leads'],r.Sold] }];
+      } else {
+        categories=['Contacted','Replies','ApptLeads','Sold'];
+        series=[{ name: state.agentType, data:[r.Contacted,r.Replies,r['Appointments / Leads'],r.Sold] }];
+      }
     }
+
+    // Build options
+    const opts={
+      series:series,
+      chart:{ type:(type==='line'?'line':'bar'), height:380, toolbar:{show:false}, parentHeightOffset:0 },
+      plotOptions:{ bar:{ horizontal:(type==='bar-h' || type==='funnel'), borderRadius:6, columnWidth:(type==='funnel'?'75%':'55%') } },
+      dataLabels:{ enabled:false }, stroke:{ curve:'smooth', width:3 },
+      colors:[VAR.primary,'#22c55e','#fbbf24','#ef4444'],
+      grid:{ borderColor:VAR.line, strokeDashArray:4 },
+      xaxis:{ categories:categories, labels:{style:{colors:VAR.muted}} },
+      yaxis:{ labels:{ style:{colors:VAR.muted}, formatter:v=> metric.isPct? `${Math.round(v)}%` : fmt(v)} },
+      tooltip:{ theme:'dark', y:{ formatter:(v,ctx)=>{
+        if(type==='funnel'){
+          const label = ctx.seriesIndex===0? 'Contacted' : ctx.seriesIndex===1? 'Replies' : ctx.seriesIndex===2? 'Appt/Leads' : 'Sold';
+          // compute step % against Contacted when possible
+          let denom = 0, num=v;
+          if(state.agentType==='All'){
+            const i = ctx.dataPointIndex; const base = series[0].data[i]||0; denom=base; // Contacted column for that agent
+          }else{
+            denom = series[0].data[0]||0; // Contacted value for single agent funnel
+          }
+          const stepPct = pct(num, denom);
+          return `${fmt(num)}  — step conv ${nicePct(stepPct)}`;
+        }
+        if(metric.isPct){
+          let num=0,den=1; const cat= ctx.w.globals.labels[ctx.dataPointIndex];
+          if(state.agentType==='All'){
+            // reconstruct from rows
+            const r = getAgentRows(state.range).map(withMetrics)[ctx.dataPointIndex]||{};
+            if(metric.key==='Reply %'){num=r.Replies;den=r.Contacted}
+            else if(metric.key==='Contacted → Appt/Lead %'){num=r['Appointments / Leads'];den=r.Contacted}
+            else if(metric.key==='Appt/Lead → Close %'){num=r.Sold;den=r['Appointments / Leads']}
+          } else {
+            const r = getAgentRows(state.range).find(x=>x.name===state.agentType) || {};
+            if(cat==='Contacted'){num=r.Replies;den=r.Contacted}
+          }
+          return `${nicePct(v)} — ${fmt(num)} / ${fmt(den)}`;
+        }
+        return fmt(v);
+      }}}
+    };
+
+    if(chart) chart.destroy();
+    chart = new ApexCharts($('#main-chart'), opts); chart.render().then(sendHeight);
   }
 
-  function showSpinner(on){ $('#loading-overlay').style.display = on ? 'grid' : 'none'; }
-  function sendHeight(){ setTimeout(()=> parent.postMessage({ type:'VQ_IFR_HEIGHT', height: document.body.scrollHeight + 20 }, '*'), 0); }
+  // ------- pipeline section
+  function renderPipeline(){
+    const titleAgent = state.agentType==='All' ? 'All Agents*' : state.agentType;
+    $('#pipe-title').textContent = `Pipeline Status — ${titleAgent}`;
 
-  // ---------- EVENTS ----------
-  $('#refresh').addEventListener('click', ()=> location.reload());
-  $('#range-select').addEventListener('change', e=>{ state.range=e.target.value; renderControls(); renderKPIs(); renderChart(); renderPipeline(); sendHeight(); });
-  $('#metric-select').addEventListener('change', e=>{ state.metric=e.target.value; renderChart(); sendHeight(); });
-  $('#agent-select').addEventListener('change', e=>{ state.agentType=e.target.value; $('#agent-pill').textContent = `Agent: ${state.agentType}`; renderKPIs(); renderChart(); renderPipeline(); sendHeight(); });
-  $('#chart-type-select').addEventListener('change', e=>{ state.chartType=e.target.value; renderChart(); sendHeight(); });
-  $('#show-all').addEventListener('click', ()=>{ state.agentType='All'; $('#agent-select').value='All'; $('#agent-pill').textContent='Agent: All'; renderKPIs(); renderChart(); renderPipeline(); sendHeight(); });
+    const statuses = DATA.auditStatusTotals || [];
+    const total = statuses.reduce((s,x)=> s + (x.Count||0), 0) || 0;
+    const labels = statuses.map(s=>s.Status);
+    const values = statuses.map(s=>s.Count||0);
+    const colors = labels.map(l=> PIPELINE_COLORS[l] || PIPELINE_COLORS.default);
 
-  // ---------- PUBLIC ENTRY ----------
+    const view = $('#pipe-view').value;
+
+    if(pipeChart) { pipeChart.destroy(); pipeChart=null; }
+
+    const common={ chart:{ toolbar:{show:false}, height:320, parentHeightOffset:0 }, labels, colors, tooltip:{theme:'dark', y:{formatter:(v,i)=>`${fmt(v)} (${nicePct(pct(v,total))})`}} };
+
+    if(view==='donut'){
+      pipeChart = new ApexCharts($('#pipeline-chart'), { ...common, series:values, chart:{...common.chart, type:'donut'}, legend:{labels:{colors:VAR.muted}} });
+    }else{
+      pipeChart = new ApexCharts($('#pipeline-chart'), { ...common, series:[{name:'Count', data:values}], chart:{...common.chart, type:'bar'}, plotOptions:{bar:{horizontal:true,borderRadius:6,barHeight:'60%'}}, xaxis:{labels:{style:{colors:VAR.muted}}}, grid:{borderColor:VAR.line,strokeDashArray:4} });
+    }
+    pipeChart.render();
+
+    // list view under chart
+    $('#pipeline-list').innerHTML = statuses.map(s=>{
+      const p = total? pct(s.Count,total):0; const w = Math.max(2, Math.round(p));
+      return `<div class="row"><span>${s.Status}</span><div class="bar"><span style="width:${w}%;background:${PIPELINE_COLORS[s.Status]||PIPELINE_COLORS.default}"></span></div><span>${fmt(s.Count)} (${nicePct(p)})</span></div>`
+    }).join('');
+  }
+
+  // ------- public entry point
   window.renderDashboard = function(payload){
     try{
-      showSpinner(true);
-      DATA = (typeof payload==='string') ? JSON.parse(payload||'{}') : (payload||{});
+      $('#loading').style.display='flex';
+      DATA = (typeof payload==='string')? JSON.parse(payload||'{}') : (payload||{});
+      // defaults
+      state.range = state.range || '24h';
+      state.metric = state.metric || 'Reply %';
+      state.agentType = state.agentType || 'All';
+      state.chartType = state.chartType || 'funnel';
+
       renderHeader();
-      renderControls();
+      populateSelectors();
       renderKPIs();
       renderChart();
       renderPipeline();
-    } catch (e){ console.error(e); }
-    finally { showSpinner(false); sendHeight(); }
+      sendHeight();
+    }catch(e){ console.error(e); }
+    finally{ $('#loading').style.display='none'; }
   };
 
-  // Accept postMessage from parent
-  window.addEventListener('message', (e)=>{
-    const msg = e?.data; if (!msg || msg.type!=='VQ_METRICS') return; window.renderDashboard(msg.payload);
-  });
+  // ------- events
+  $('#refresh').addEventListener('click',()=> location.reload());
+  $('#range-select').addEventListener('change',e=>{ state.range=e.target.value; populateSelectors(); renderKPIs(); renderChart(); sendHeight(); });
+  $('#metric-select').addEventListener('change',e=>{ state.metric=e.target.value; renderChart(); sendHeight(); });
+  $('#agent-select').addEventListener('change',e=>{ state.agentType=e.target.value; renderHeader(); renderChart(); renderPipeline(); sendHeight(); });
+  $('#chart-type-select').addEventListener('change',e=>{ state.chartType=e.target.value; renderChart(); sendHeight(); });
+  $('#show-all-btn').addEventListener('click',()=>{ state.agentType='All'; $('#agent-select').value='All'; renderHeader(); renderChart(); renderPipeline(); sendHeight(); });
+  $('#pipe-view').addEventListener('change',()=>{ renderPipeline(); sendHeight(); });
 
-  // initial bare UI
+  // ------- resize -> parent
+  function sendHeight(){ setTimeout(()=> parent.postMessage({type:'VQ_IFR_HEIGHT', height: document.body.scrollHeight }, '*'), 0); }
+  window.addEventListener('resize', sendHeight);
+  // update height whenever DOM mutates (charts/layout)
+  new MutationObserver(()=>sendHeight()).observe(document.body,{childList:true,subtree:true});
+
+  // Initial shell (in case host loads before data)
   document.addEventListener('DOMContentLoaded', ()=>{
-    showSpinner(true);
-    renderControls();
+    $('#biz-name').textContent='—';
+    $('#agent-select').innerHTML='<option>All</option>';
+    $('#metric-select').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
+    $('#chart-type-select').value='funnel';
     sendHeight();
   });
 })();
