@@ -1,50 +1,57 @@
 (function () {
   var s = document.currentScript;
-  // attributes
-  var src = s.getAttribute('data-src');                  // required: URL to dashboard.html (GitHub Pages URL)
-  var height = s.getAttribute('data-height') || '1800';  // optional default height
-  var targetId = s.getAttribute('data-target') || 'vq-dashboard-container';
-  var locationId = s.getAttribute('data-location') || ''; // {{ location.id }} will be put here by GHL
-  var webhook = s.getAttribute('data-webhook') || 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
+  var host = document.getElementById('vq-dashboard-container') || (function () {
+    var d = document.createElement('div'); d.id = 'vq-dashboard-container';
+    s.parentNode.insertBefore(d, s); return d;
+  })();
 
-  // host container
-  var host = document.getElementById(targetId);
-  if (!host) {
-    host = document.createElement('div');
-    host.id = targetId;
-    s.parentNode.insertBefore(host, s);
-  }
+  // attributes from the <script> tag
+  var DASHBOARD_SRC = s.getAttribute('data-src');                      // e.g. https://aaron-rowley.github.io/v5-dashboard/v1.0/dashboard.html
+  var WEBHOOK       = s.getAttribute('data-webhook');                  // e.g. https://api.visquanta.com/webhook/Refresh-v5-dashboard
+  var LOCATION_ID   = s.getAttribute('data-location') || '';           // {{ location.id }}
+  var HEIGHT        = s.getAttribute('data-height') || '1800';         // css height (px or any CSS unit)
 
-  // iframe
+  if (!DASHBOARD_SRC)  return console.error('VQ: data-src is required');
+  if (!WEBHOOK)        return console.error('VQ: data-webhook is required');
+  if (!LOCATION_ID)    console.warn('VQ: data-location is empty');
+
+  // create iframe
   var ifr = document.createElement('iframe');
-  if (!src) { console.error('VQ loader: data-src is required'); return; }
-  ifr.src = src;
+  ifr.src = DASHBOARD_SRC;
   ifr.loading = 'lazy';
   ifr.style.width = '100%';
   ifr.style.border = '0';
-  ifr.style.height = (/^\d+$/.test(height) ? height + 'px' : height);
+  ifr.style.height = /^\d+$/.test(HEIGHT) ? (HEIGHT + 'px') : HEIGHT;
   host.appendChild(ifr);
 
-  // fetch metrics from n8n once iframe is ready
-  ifr.addEventListener('load', function () {
-    fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ location: { id: locationId } })
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (ifr.contentWindow) {
-        ifr.contentWindow.postMessage({ type: 'VQ_METRICS', payload: JSON.stringify(data) }, '*');
-      }
-    })
-    .catch(function (e) { console.warn('VQ loader: webhook failed', e); });
-  });
-
-  // auto-resize when the iframe reports its height
+  // helper: resize when child reports height
   window.addEventListener('message', function (e) {
     if (e && e.data && e.data.type === 'VQ_IFR_HEIGHT') {
-      ifr.style.height = (e.data.height || height) + 'px';
+      ifr.style.height = (e.data.height || 1800) + 'px';
     }
+  });
+
+  // when iframe is ready, fetch metrics then post to it
+  ifr.addEventListener('load', function () {
+    var body = { location: { id: LOCATION_ID } };
+    var controller = new AbortController();
+    var timeout = setTimeout(function(){ controller.abort(); }, 45000); // 45s safety
+
+    fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    })
+      .then(function (r) { clearTimeout(timeout); return r.json(); })
+      .then(function (data) {
+        if (ifr.contentWindow) {
+          ifr.contentWindow.postMessage({
+            type: 'VQ_METRICS',
+            payload: data   // send raw object; dashboard will handle it
+          }, '*');
+        }
+      })
+      .catch(function (err) { console.warn('VQ: webhook fetch failed', err); });
   });
 })();
