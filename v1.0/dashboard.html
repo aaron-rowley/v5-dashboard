@@ -1,500 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Agent Performance Dashboard (v1)</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Agent Performance Dashboard (v1.1)</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<style>
-    :root {
-      --bg-main:#0f1115; --bg-panel:#17191e; --bg-panel-2:#21242b; --bg-element:#101215;
-    /* keep your existing vars/styles, cut audit + contacts */
-    :root { --bg-main:#0f1115; --bg-panel:#17191e; --bg-panel-2:#21242b; --bg-element:#101215;
---line:#2b2f36; --text-main:#ffffff; --text-muted:#a9b0bc; --primary:#ed6c03; --primary-dark:#b94f00;
-      --radius:12px; --font:'Outfit',sans-serif; --shadow:0 8px 32px rgba(0,0,0,.25);
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    :root{
+      --bg-main:#0f1115;--bg-panel:#17191e;--bg-panel-2:#21242b;--bg-element:#101215;
+      --line:#2b2f36;--text-main:#fff;--text-muted:#a9b0bc;--primary:#ed6c03;--primary-dark:#b94f00;
+      --radius:12px;--font:'Outfit',sans-serif;
     }
     *,*:before,*:after{box-sizing:border-box}
-      --radius:12px; --font:'Outfit',sans-serif; --shadow:0 8px 32px rgba(0,0,0,.25);}
-html,body{background:var(--bg-main);margin:0;font-family:var(--font);color:var(--text-main)}
-#wrapper{max-width:1200px;margin:40px auto;padding:0 20px}
-    .shell{background:transparent;padding:0}
-    .header .title{font-size:26px;font-weight:700;margin:0 0 4px}
-    .header .sub{color:var(--text-muted);font-size:1rem;margin:0 0 24px}
-    .last-updated-bar{display:flex;align-items:center;justify-content:space-between;color:var(--text-muted);font-size:.9rem;margin-bottom:24px}
-    .btn-refresh{background:none;border:1px solid var(--line);color:var(--text-main);border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:500;transition:.2s}
-    .btn-refresh:hover{background:var(--primary);border-color:var(--primary-dark)}
-    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:24px}
-    .kpi{background:var(--bg-panel);border-radius:var(--radius);padding:20px}
-    .kpi h4{margin:0 0 8px;font-weight:500;color:var(--text-muted);font-size:1rem}
-    .kpi .big{font-size:36px;font-weight:700;margin-bottom:12px}
-    .kpi .pill{display:inline-block;font-size:.85rem;font-weight:500}
+    html,body{margin:0;background:var(--bg-main);color:var(--text-main);font-family:var(--font)}
+    #wrapper{max-width:1200px;margin:40px auto;padding:0 20px}
+    .header .flow{margin:4px 0 16px;color:var(--text-muted);font-weight:600}
+    .bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--bg-panel);border-radius:12px;padding:14px 16px;margin:8px 0 16px}
+    .bar .group{display:flex;align-items:center;gap:8px}
+    .label{color:var(--text-muted);font-size:.9rem;font-weight:600}
+    select,.btn{appearance:none;background:var(--bg-panel-2);border:1px solid var(--line);color:var(--text-main);border-radius:8px;padding:10px 14px;font-size:.9rem}
+    .btn{cursor:pointer}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:12px 0 20px}
+    .kpi{background:var(--bg-panel);border-radius:12px;padding:18px}
+    .kpi h4{margin:0 0 8px;color:var(--text-muted);font-weight:600}
+    .kpi .big{font-size:34px;font-weight:800}
+    .kpi .pill{margin-top:8px;font-size:.9rem}
     .kpi .pill strong{color:var(--primary)}
-    .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:24px 0;padding:16px;background:var(--bg-panel);border-radius:var(--radius)}
-    .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:0 0 24px;padding:16px;background:var(--bg-panel);border-radius:var(--radius)}
-.controls .label{color:var(--text-muted);font-weight:500;font-size:.9rem}
-    .controls .select{appearance:none;background:var(--bg-panel-2);border:1px solid var(--line);color:var(--text-main);border-radius:8px;padding:10px 30px 10px 14px;font-size:.9rem;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.41 0.59L6 5.17 10.59 0.59 12 2 6 8 0 2 1.41 0.59Z' fill='%23a9b0bc'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-    .controls .btn-show-all{background:var(--bg-panel-2);border:1px solid var(--line);color:var(--text-main);border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:500;transition:.2s}
-    .controls .btn-show-all:hover{background:var(--primary);border-color:var(--primary-dark)}
-.chart-container{background:var(--bg-panel);border-radius:var(--radius);padding:20px}
-.grid-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
-.panel{background:var(--bg-panel);border-radius:var(--radius);padding:24px}
-.panel-title{font-size:1.25rem;font-weight:600;margin:0 0 20px}
-    .stat-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+    .panel{background:var(--bg-panel);border-radius:12px;padding:20px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+    .stat-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:10px 0}
     .stat-row:last-child{border-bottom:none}
-    .stat-row .label{color:var(--text-muted)}
-    .stat-row .value{font-weight:600}
-    .stat-row .value.highlight{color:var(--primary)}
-    #all-agents-card .cta-button{margin-top:20px;width:100%;padding:12px;background:var(--bg-panel-2);border:1px solid var(--line);color:#fff;border-radius:8px;cursor:pointer;font-weight:600}
-    #all-agents-card .cta-button:hover{background:#2c2f36}
-    .pipeline-status-item{margin-bottom:16px}
-    .pipeline-status-item .status-header{display:flex;justify-content:space-between;margin-bottom:8px;font-size:.9rem}
-    .pipeline-status-item .status-label{display:flex;align-items:center;gap:8px;font-weight:500}
-    .pipeline-status-item .status-dot{width:10px;height:10px;border-radius:50%}
-    .pipeline-status-item .progress-bar{width:100%;height:8px;background:var(--bg-panel-2);border-radius:4px;overflow:hidden}
-    .pipeline-status-item .progress-bar-inner{height:100%;border-radius:4px}
-    .audit-container{grid-column:1/-1;background:var(--bg-panel);border-radius:var(--radius);padding:24px}
-    .audit-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-    .audit-tab{padding:8px 16px;border-radius:20px;background:var(--bg-element);border:1px solid var(--line);cursor:pointer;font-size:.9rem;font-weight:500}
-    .audit-tab.active{background:var(--primary);border-color:var(--primary-dark);color:#fff}
-    .audit-content{display:grid;grid-template-columns:3fr 4fr;gap:20px}
-    .sub-panel{background:var(--bg-element);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
-    .sub-panel-title{font-size:1.1rem;font-weight:600;margin:0 0 16px}
-    .agent-perf-item{margin-bottom:16px;border:1px solid var(--line);border-radius:10px;padding:16px}
-    .agent-perf-item h5{margin:0 0 12px;font-size:1rem;font-weight:700;color:var(--primary)}
-    .agent-perf-details{display:flex;gap:20px;flex-wrap:wrap}
-    .contacts-container{grid-column:1/-1;background:var(--bg-panel);border-radius:var(--radius);padding:24px}
-    .contacts-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-    .contacts-search input{background:var(--bg-panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;color:var(--text-main);width:250px}
-    .contacts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-    .contact-card{background:var(--bg-element);border:1px solid var(--line);border-radius:10px;padding:16px}
-    .contact-card .name{font-weight:600;font-size:1.1rem}
-    .contact-card .id{color:var(--text-muted);font-size:.8rem;margin:4px 0 12px}
-    .contact-card .tag{display:inline-block;padding:4px 10px;border-radius:6px;font-size:.75rem;font-weight:700;text-transform:uppercase;background:var(--primary);color:#fff}
-    .contact-card .btn-details{width:100%;margin-top:16px;padding:10px;border:1px solid var(--line);background:var(--bg-panel-2);color:var(--text-main);border-radius:8px;cursor:pointer}
-    #load-more-contacts{display:block;margin:24px auto 0;width:200px;padding:12px;background:var(--bg-panel-2);border:1px solid var(--line);color:#fff;border-radius:8px;cursor:pointer;font-weight:600}
-    @media (max-width:900px){.grid-layout,.audit-content{grid-template-columns:1fr}}
-    #loading{color:var(--text-muted);text-align:center;padding:40px 0}
-    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:24px}
-    .kpi{background:var(--bg-panel);border-radius:var(--radius);padding:20px}
-    .kpi h4{margin:0 0 8px;font-weight:500;color:var(--text-muted)}
-    .kpi .big{font-size:36px;font-weight:700;margin-bottom:12px}
-    .kpi .pill{display:inline-block;font-size:.85rem;font-weight:500}
-    .kpi .pill strong{color:var(--primary)}
-</style>
+    .muted{color:var(--text-muted)}
+    @media (max-width:900px){.kpis{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
 <div id="wrapper">
-  <div class="shell">
-    <div class="header">
-      <h1 class="title" id="biz-name">—</h1>
-      <p class="sub">Agent Performance Intelligence Suite</p>
-    </div>
-
   <div class="header">
-    <h1 class="title" id="biz-name">—</h1>
-    <p class="sub">Agent Performance Intelligence Suite</p>
-    <div class="flow-label">Prospects Contacted → Replies → Appts / Leads → Closed</div>
-<div class="last-updated-bar">
-<span>Last updated on: <strong id="last-updated">—</strong></span>
-<button class="btn-refresh" id="refresh">Refresh metrics</button>
-</div>
+    <h2 id="biz-name" style="margin:0 0 2px">—</h2>
+    <div class="flow">Prospects contacted → Replies → Appts / Leads → Closed</div>
+    <div class="muted">Last updated on: <strong id="last-updated">—</strong> &nbsp;&nbsp;
+      <button id="refresh" class="btn">Refresh metrics</button>
+    </div>
   </div>
 
-    <div class="kpis" id="kpis-grid"></div>
-
-    <div class="controls">
-      <span class="label">Range:</span>
-      <select class="select" id="range-select">
+  <!-- Controls -->
+  <div class="bar">
+    <div class="group"><span class="label">Range</span>
+      <select id="range-select">
         <option value="24h">Last 24 Hours</option>
         <option value="7d">Last 7 Days</option>
         <option value="30d">Last 30 Days</option>
         <option value="90d">Last 90 Days</option>
       </select>
-      <span class="label">Metric:</span>
-      <select class="select" id="metric-select"></select>
-      <span class="label">Agent Type:</span>
-      <select class="select" id="agent-select"></select>
-      <span class="label">Chart:</span>
-      <select class="select" id="chart-type-select">
+    </div>
+    <div class="group"><span class="label">Metric</span>
+      <select id="metric-select"></select>
+    </div>
+    <div class="group"><span class="label">Agent</span>
+      <select id="agent-select"></select>
+      <button class="btn" id="show-all-btn">Show All</button>
+    </div>
+    <div class="group"><span class="label">Chart</span>
+      <select id="chart-type-select">
         <option value="bar">Bar (vertical)</option>
         <option value="bar-h">Bar (horizontal)</option>
         <option value="line">Line</option>
+        <option value="donut">Donut</option>
+        <option value="funnel">Funnel</option>
       </select>
-      <button class="btn-show-all" id="show-all-btn">Show All</button>
     </div>
-
-    <div class="chart-container" id="main-chart-container"></div>
-  <!-- controls first -->
-  <div class="controls">
-    <span class="label">Range:</span>
-    <select id="range-select"></select>
-    <span class="label">Metric:</span>
-    <select id="metric-select"></select>
-    <span class="label">Agent:</span>
-    <select id="agent-select"></select>
-    <span class="label">Chart:</span>
-    <select id="chart-type-select">
-      <option value="bar">Bar (vertical)</option>
-      <option value="bar-h">Bar (horizontal)</option>
-      <option value="line">Line</option>
-      <option value="donut">Donut</option>
-    </select>
-    <button id="show-all-btn">Show All</button>
   </div>
 
-    <div class="grid-layout">
-      <div class="panel" id="all-agents-card"></div>
-      <div class="panel" id="pipeline-status-panel"></div>
-  <!-- KPIs -->
-  <div class="kpis" id="kpis-grid"></div>
+  <!-- KPI row -->
+  <div class="kpis">
+    <div class="kpi"><h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div><div class="pill" id="pill-1"></div></div>
+    <div class="kpi"><h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="pill">Reply %: <strong id="pill-reply">0.0%</strong></div></div>
+    <div class="kpi"><h4>Appointments / Leads</h4><div class="big" id="kpi-leads">0</div><div class="pill">Contacted → Appt/Lead %: <strong id="pill-c2l">0.0%</strong></div></div>
+    <div class="kpi"><h4>Closed</h4><div class="big" id="kpi-sold">0</div><div class="pill">Appt/Lead → Close %: <strong id="pill-l2c">0.0%</strong></div></div>
+  </div>
 
-      <div class="audit-container">
-        <h3 class="panel-title">Pipeline Audit</h3>
-        <div class="audit-tabs" id="audit-tabs"></div>
-        <div class="audit-content">
-          <div class="sub-panel" id="audit-status-overview"></div>
-          <div class="sub-panel" id="audit-agent-performance"></div>
-        </div>
-      </div>
-  <!-- Chart -->
-  <div class="chart-container" id="main-chart-container"></div>
+  <!-- Main chart -->
+  <div class="panel"><div id="main-chart"></div></div>
 
-      <div class="contacts-container">
-        <div class="contacts-header">
-          <h3 class="panel-title">Contacts Database</h3>
-          <div class="contacts-search"><input type="text" id="contact-search" placeholder="Search by name or contact ID..."></div>
-        </div>
-        <div id="loading">Waiting for data…</div>
-        <div class="contacts-grid" id="contacts-grid" style="display:none"></div>
-        <button id="load-more-contacts" style="display:none">Load More Contacts</button>
-      </div>
-    </div>
-  <!-- Two panels -->
-  <div class="grid-layout">
-    <div class="panel" id="all-agents-card"></div>
-    <div class="panel" id="pipeline-status-panel"></div>
-</div>
+  <!-- Two responsive cards -->
+  <div class="grid-2">
+    <div class="panel" id="summary-card"></div>
+    <div class="panel" id="pipeline-card"></div>
+  </div>
 </div>
 
 <script>
 (function(){
-  // ---------- minimal helpers
+  // ---------- helpers
   const $ = s => document.querySelector(s);
   const fmt = n => new Intl.NumberFormat().format(Math.round(n||0));
   const pct = (num, den) => den>0 ? (100*num/den) : 0;
-  const nicePct = v => `${parseFloat(v||0).toFixed(1)}%`;
+  const p1 = v => `${(v||0).toFixed(1)}%`;
   const VAR = {
     primary: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
     line: getComputedStyle(document.documentElement).getPropertyValue('--line').trim(),
-    text_muted: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim()
+    textMuted: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim()
   };
 
-  // ---------- app state
+  // ---------- state + data
   let DATA = {};
-  const state = { range:'24h', metric:'Reply %', agentType:'All', chartType:'bar', auditAgent:'All Agents*' };
-  let mainChart=null;
+  const state = { range:'24h', metric:'Reply %', agent:'All', chart:'bar' };
+  let chart = null;
 
+  // metrics catalog
   const METRICS = [
-    { label:'Reply %', key:'Reply %', isPct:true },
-    { label:'Contacted → Appt/Lead %', key:'Contacted → Appt/Lead %', isPct:true },
-    { label:'Appt/Lead → Close %', key:'Appt/Lead → Close %', isPct:true },
-    { label:'Contacted → Close %', key:'Contacted → Close %', isPct:true },
-    { label:'Contacted', key:'Contacted', isPct:false },
-    { label:'Replies', key:'Replies', isPct:false },
-    { label:'Appointments / Leads', key:'Appointments / Leads', isPct:false },
-    { label:'Sold', key:'Sold', isPct:false }
-  const $=s=>document.querySelector(s);
-  const fmt=n=>new Intl.NumberFormat().format(Math.round(n||0));
-  const pct=(num,den)=>den>0?(100*num/den):0;
-  const nicePct=v=>`${parseFloat(v||0).toFixed(1)}%`;
+    { label:'Reply %', key:'Reply %', isPct:true, tip:(a)=>`Replies / Contacted = ${fmt(a.Replies)} / ${fmt(a.Contacted)}` },
+    { label:'Contacted → Appt/Lead %', key:'Contacted → Appt/Lead %', isPct:true, tip:(a)=>`Leads / Contacted = ${fmt(a['Appointments / Leads'])} / ${fmt(a.Contacted)}` },
+    { label:'Appt/Lead → Close %', key:'Appt/Lead → Close %', isPct:true, tip:(a)=>`Sold / Leads = ${fmt(a.Sold)} / ${fmt(a['Appointments / Leads'])}` },
+    { label:'Contacted → Close %', key:'Contacted → Close %', isPct:true, tip:(a)=>`Sold / Contacted = ${fmt(a.Sold)} / ${fmt(a.Contacted)}` },
+    { label:'Contacted', key:'Contacted', isPct:false, tip:()=>`` },
+    { label:'Replies', key:'Replies', isPct:false, tip:()=>`` },
+    { label:'Appointments / Leads', key:'Appointments / Leads', isPct:false, tip:()=>`` },
+    { label:'Sold', key:'Sold', isPct:false, tip:()=>`` },
+  ];
 
-  let DATA={};
-  const state={range:'24h',metric:'Reply %',agentType:'All',chartType:'bar'};
+  // data transforms
+  const getAgents = (range)=> (DATA.agentsByRange?.[range]||[])
+    .filter(a=>a.agent && a.agent.toLowerCase()!=='cxa')
+    .map(a=>({ name:a.agent, Contacted:a.outbound||0, Replies:a.inbound||0, 'Appointments / Leads':a.leads||0, Sold:a.sold||0 }));
 
-  const METRICS=[
-    {label:'Reply %',key:'Reply %',isPct:true,formula:(a)=>`${a.Replies}/${a.Contacted}`},
-    {label:'Contacted → Appt/Lead %',key:'Contacted → Appt/Lead %',isPct:true,formula:(a)=>`${a['Appointments / Leads']}/${a.Contacted}`},
-    {label:'Appt/Lead → Close %',key:'Appt/Lead → Close %',isPct:true,formula:(a)=>`${a.Sold}/${a['Appointments / Leads']}`},
-    {label:'Contacted → Close %',key:'Contacted → Close %',isPct:true,formula:(a)=>`${a.Sold}/${a.Contacted}`}
-];
-  const PIPELINE_COLORS={ "New":"#ED6C03","Lost":"#EF4444","Sold":"#22C55E","Needs Follow Up":"#F59E0B","Pipeline":"#8B5CF6","sold b/ai":"#3B82F6","default":"#6B7280" };
+  const withDerived = (row)=>({
+    ...row,
+    'Reply %': pct(row.Replies,row.Contacted),
+    'Contacted → Appt/Lead %': pct(row['Appointments / Leads'],row.Contacted),
+    'Appt/Lead → Close %': pct(row.Sold,row['Appointments / Leads']),
+    'Contacted → Close %': pct(row.Sold,row.Contacted),
+  });
 
-  // ---------- data helpers
-  const getAgentData = range => (DATA.agentsByRange?.[range]||[])
-    .filter(a => a.agent && a.agent.toLowerCase()!=='cxa')
-    .map(a => ({ name:a.agent, Contacted:a.outbound||0, Replies:a.inbound||0, 'Appointments / Leads':a.leads||0, Sold:a.sold||0 }));
-  const getAgentData=(range)=>{
-    return (DATA.agentsByRange?.[range]||[]).map(a=>({
-      name:a.agent,
-      Contacted:a.outbound||0,
-      Replies:a.inbound||0,
-      'Appointments / Leads':a.leads||0,
-      Sold:a.sold||0
-    }));
-  };
+  const totalOf = (rows)=> rows.reduce((acc,r)=>{
+    for(const k of Object.keys(r)) if(k!=='name') acc[k]=(acc[k]||0)+(r[k]||0);
+    return acc;
+  },{Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0});
 
-  const computeMetrics = data => ({
-    ...data,
-    'Reply %': pct(data.Replies, data.Contacted),
-    'Contacted → Appt/Lead %': pct(data['Appointments / Leads'], data.Contacted),
-    'Appt/Lead → Close %': pct(data.Sold, data['Appointments / Leads']),
-    'Contacted → Close %': pct(data.Sold, data.Contacted)
-  const computeMetrics=(d)=>({...d,
-    'Reply %':pct(d.Replies,d.Contacted),
-    'Contacted → Appt/Lead %':pct(d['Appointments / Leads'],d.Contacted),
-    'Appt/Lead → Close %':pct(d.Sold,d['Appointments / Leads']),
-    'Contacted → Close %':pct(d.Sold,d.Contacted)
-});
-
-  // ---------- renders
+  // ---------- renderers
   function renderHeader(){
-    $('#biz-name').textContent = DATA.company || 'Agent Performance';
-    const date = new Date(DATA.generatedAtUTC || Date.now());
-    $('#last-updated').textContent = date.toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+    $('#biz-name').textContent = DATA.company || '—';
+    $('#last-updated').textContent = new Date(DATA.generatedAtUTC||Date.now())
+      .toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
   }
 
-function renderKPIs(){
-    const d = DATA.byRange?.[state.range] || {};
-    const contacted = d.messages?.outbound||0, replies=d.messages?.inbound||0, leads=d.leads||0, sold=d.sold||0;
-    const kpiData = [
-      { title:'Prospects contacted', big:fmt(contacted), pill:`Reply %: <strong>${nicePct(pct(replies,contacted))}</strong>` },
-      { title:'Replies', big:fmt(replies) },
-      { title:'Appointments / Leads', big:fmt(leads), pill:`Contacted → Appt/Lead %: <strong>${nicePct(pct(leads,contacted))}</strong>` },
-      { title:'Contacted → Close %', big:`${nicePct(pct(sold,contacted))}`, pill:`Sold: <strong>${fmt(sold)}</strong>` }
-    const d=DATA.byRange?.[state.range]||{};
-    const contacted=d.messages?.outbound||0,
-          replies=d.messages?.inbound||0,
-          leads=d.leads||0,
-          sold=d.sold||0;
-    const kpiData=[
-      {title:'Prospects contacted',big:fmt(contacted)},
-      {title:'Replies',big:fmt(replies),pill:`Reply %: <strong>${nicePct(pct(replies,contacted))}</strong>`},
-      {title:'Appointments / Leads',big:fmt(leads),pill:`Contacted → Appt/Lead %: <strong>${nicePct(pct(leads,contacted))}</strong>`},
-      {title:'Closed',big:fmt(sold),pill:`Appt/Lead → Close %: <strong>${nicePct(pct(sold,leads))}</strong>`}
-];
-    $('#kpis-grid').innerHTML = kpiData.map(k=>`
-      <div class="kpi"><h4>${k.title}</h4><div class="big">${k.big}</div>${k.pill?`<div class="pill">${k.pill}</div>`:''}</div>
-    `).join('');
-    $('#kpis-grid').innerHTML=kpiData.map(k=>`
-      <div class="kpi"><h4>${k.title}</h4><div class="big">${k.big}</div>${k.pill?`<div class="pill">${k.pill}</div>`:''}</div>`).join('');
-}
+  function renderKPIs(){
+    const by = DATA.byRange?.[state.range] || {};
+    const contacted = by.messages?.outbound||0;
+    const replies = by.messages?.inbound||0;
+    const leads = by.leads||0;
+    const sold = by.sold||0;
 
-function renderMainChart(){
-    const allAgents = getAgentData(state.range).map(computeMetrics);
-    const selectedMetric = METRICS.find(m=>m.label===state.metric);
-    let seriesData, categories;
+    $('#kpi-contacted').textContent = fmt(contacted);
+    $('#kpi-replies').textContent   = fmt(replies);
+    $('#kpi-leads').textContent     = fmt(leads);
+    $('#kpi-sold').textContent      = fmt(sold);
 
-    if (state.agentType==='All'){
-      categories = allAgents.map(a=>a.name);
-      seriesData = [{ name:selectedMetric.label, data: allAgents.map(a=>a[selectedMetric.key]||0) }];
+    $('#pill-1').textContent        = ''; // blank on card 1
+    $('#pill-reply').textContent    = p1(pct(replies,contacted));
+    $('#pill-c2l').textContent      = p1(pct(leads,contacted));
+    $('#pill-l2c').textContent      = p1(pct(sold,leads));
+  }
+
+  function renderMainChart(){
+    const rows = getAgents(state.range).map(withDerived);
+    const m = METRICS.find(x=>x.label===state.metric);
+
+    // when a single agent is chosen, we show that agent’s bar/line series of raw steps;
+    // donut shows split of the chosen metric across agents; funnel shows single agent funnel.
+    let options;
+
+    if(state.chart==='donut'){
+      options = {
+        series: rows.map(r=> r[m.key]||0),
+        chart:{ type:'donut', height:360 },
+        labels: rows.map(r=>r.name),
+        tooltip:{ theme:'dark', y:{ formatter:(v,ctx)=>{
+          const a = rows[ctx.seriesIndex];
+          const tip = m.tip(a);
+          return m.isPct ? `${p1(v)} — ${tip}` : `${fmt(v)} — ${tip}`;
+        }}},
+        legend:{ labels:{ colors:VAR.textMuted } }
+      };
+    } else if (state.chart==='funnel'){
+      // funnel only meaningful for a specific agent; if All, use totals
+      const agentRow = (state.agent!=='All') ? rows.find(r=>r.name===state.agent) : withDerived(totalOf(rows));
+      const steps = [
+        {name:'Contacted', val:agentRow.Contacted},
+        {name:'Replies', val:agentRow.Replies},
+        {name:'Appt/Leads', val:agentRow['Appointments / Leads']},
+        {name:'Sold', val:agentRow.Sold},
+      ];
+      options = {
+        series:[{ data: steps.map(s=>s.val) }],
+        chart:{ type:'bar', height:360 },
+        plotOptions:{ bar:{ horizontal:true, distributed:true, barHeight:'70%' } },
+        xaxis:{ categories: steps.map(s=>s.name), labels:{ style:{ colors:VAR.textMuted } } },
+        yaxis:{ labels:{ style:{ colors:VAR.textMuted } } },
+        grid:{ borderColor:VAR.line, strokeDashArray:4 },
+        colors:['#e67e22','#f39c12','#3498db','#2ecc71'],
+        tooltip:{ theme:'dark', y:{ formatter:(v,ctx)=>{
+          const i = ctx.dataPointIndex;
+          if(i===1) return `${fmt(v)} — Reply % = ${fmt(agentRow.Replies)} / ${fmt(agentRow.Contacted)} = ${p1(pct(agentRow.Replies,agentRow.Contacted))}`;
+          if(i===2) return `${fmt(v)} — C→Lead % = ${fmt(agentRow['Appointments / Leads'])} / ${fmt(agentRow.Contacted)} = ${p1(pct(agentRow['Appointments / Leads'],agentRow.Contacted))}`;
+          if(i===3) return `${fmt(v)} — Lead→Close % = ${fmt(agentRow.Sold)} / ${fmt(agentRow['Appointments / Leads'])} = ${p1(pct(agentRow.Sold,agentRow['Appointments / Leads']))}`;
+          return fmt(v);
+        }}}
+      };
     } else {
-      const agent = allAgents.find(a=>a.name===state.agentType);
-      categories = agent ? ['Contacted','Replies','Appt/Leads','Sold'] : [];
-      seriesData = agent ? [{ name:agent.name, data:[agent.Contacted,agent.Replies,agent['Appointments / Leads'],agent.Sold]}] : [];
-    const agents=getAgentData(state.range).map(computeMetrics);
-    const metric=METRICS.find(m=>m.label===state.metric)||METRICS[0];
-    let categories=[],seriesData=[];
-
-    if(state.agentType==='All'){
-      categories=agents.map(a=>a.name);
-      seriesData=[{name:metric.label,data:agents.map(a=>a[metric.key]||0)}];
-    }else{
-      const a=agents.find(x=>x.name===state.agentType);
-      if(a){categories=['Contacted','Replies','Appts/Leads','Sold'];
-        seriesData=[{name:a.name,data:[a.Contacted,a.Replies,a['Appointments / Leads'],a.Sold]}];
+      // bar/line
+      let categories, series;
+      if(state.agent==='All'){
+        categories = rows.map(r=>r.name);
+        series = [{name:m.label, data: rows.map(r=>r[m.key]||0)}];
+      } else {
+        const a = rows.find(r=>r.name===state.agent) || {Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0};
+        const agentSeries = [a.Contacted,a.Replies,a['Appointments / Leads'],a.Sold];
+        categories = ['Contacted','Replies','Appt/Leads','Sold'];
+        series = [{name:state.agent, data: agentSeries}];
       }
-}
 
-    const options = {
-      series: seriesData,
-      chart: { type: state.chartType==='line'?'line':'bar', height:350, toolbar:{show:false}, parentHeightOffset:0 },
-      plotOptions: { bar:{ horizontal: state.chartType==='bar-h', borderRadius:6, columnWidth:'55%' } },
-      dataLabels:{ enabled:false },
-      stroke:{ curve:'smooth', width:3 },
-      colors:[VAR.primary],
-      grid:{ borderColor:VAR.line, strokeDashArray:4 },
-      xaxis:{ categories, labels:{ style:{ colors:VAR.text_muted } }, axisBorder:{show:false}, axisTicks:{show:false} },
-      yaxis:{ labels:{ style:{ colors:VAR.text_muted }, formatter: val=> selectedMetric.isPct? `${Math.round(val)}%` : fmt(val) } },
-      tooltip:{ theme:'dark' }
-    const type=state.chartType==='donut'?'donut':(state.chartType==='line'?'line':'bar');
+      options = {
+        series,
+        chart:{ type: state.chart==='line'?'line':'bar', height:360, toolbar:{show:false}},
+        plotOptions:{ bar:{ horizontal: state.chart==='bar-h', borderRadius:6, columnWidth:'55%' } },
+        dataLabels:{ enabled:false },
+        stroke:{ curve:'smooth', width:3 },
+        colors:[VAR.primary],
+        grid:{ borderColor:VAR.line, strokeDashArray:4 },
+        xaxis:{ categories, labels:{ style:{ colors:VAR.textMuted }}, axisBorder:{show:false}, axisTicks:{show:false} },
+        yaxis:{ labels:{ style:{ colors:VAR.textMuted }, formatter:(v)=> m.isPct? `${Math.round(v)}%` : fmt(v)} },
+        tooltip:{ theme:'dark', y:{ formatter:(v,ctx)=>{
+          const idx = ctx.dataPointIndex;
+          if(state.agent==='All'){
+            const a = rows[idx];
+            const tip = m.tip(a);
+            return m.isPct ? `${p1(v)} — ${tip}` : `${fmt(v)} — ${tip}`;
+          } else {
+            const a = withDerived(totalOf([{Contacted:series[0].data[0],Replies:series[0].data[1],'Appointments / Leads':series[0].data[2],Sold:series[0].data[3]}]));
+            const tip = m.tip(a);
+            return m.isPct ? `${p1(v)} — ${tip}` : `${fmt(v)} — ${tip}`;
+          }
+        }}}
+      };
+    }
 
-    const options={
-      series:seriesData,
-      chart:{type,height:350,toolbar:{show:false}},
-      labels:categories,
-      plotOptions:{bar:{horizontal:state.chartType==='bar-h',borderRadius:6,columnWidth:'55%'}},
-      tooltip:{theme:'dark',y:{formatter:(val,opts)=>{
-        const i=opts.dataPointIndex;
-        const a=agents[i];
-        if(metric.isPct && a){
-          return `${nicePct(val)} (${metric.formula(a)})`;
-        }
-        return fmt(val);
-      }}}
-};
-
-    if (mainChart) mainChart.destroy();
-    mainChart = new ApexCharts($('#main-chart-container'), options);
-    mainChart.render();
-    if(window.mainChart)window.mainChart.destroy();
-    window.mainChart=new ApexCharts($('#main-chart-container'),options);
-    window.mainChart.render();
-}
-
-function renderAllAgentsCard(){
-    const agents = getAgentData(state.range);
-    const totals = agents.reduce((acc,curr)=>{
-      Object.keys(curr).forEach(k=>{ if(k!=='name') acc[k]=(acc[k]||0)+curr[k]; }); return acc;
-    },{});
-    const t = computeMetrics(totals);
-    const stats = [
-      { label:'Contacted', value:fmt(t.Contacted) },
-      { label:'Replies', value:fmt(t.Replies) },
-      { label:'Appointments / Leads', value:fmt(t['Appointments / Leads']) },
-      { label:'Sold', value:fmt(t.Sold) },
-      { label:'Reply %', value:nicePct(t['Reply %']), highlight:true },
-      { label:'Contacted → Appt/Lead %', value:nicePct(t['Contacted → Appt/Lead %']), highlight:true },
-      { label:'Appt/Lead → Close %', value:nicePct(t['Appt/Lead → Close %']), highlight:true }
-    ];
-    $('#all-agents-card').innerHTML = `
-      <h3 class="panel-title">All Agents*</h3>
-      ${stats.map(s=>`<div class="stat-row"><span class="label">${s.label}</span><span class="value ${s.highlight?'highlight':''}">${s.value}</span></div>`).join('')}
-      <button class="cta-button">View contacts</button>`;
-    let agents=getAgentData(state.range);
-    if(state.agentType!=='All'){agents=agents.filter(a=>a.name===state.agentType);}
-    const totals=agents.reduce((acc,c)=>{for(const k in c){if(k!=='name')acc[k]=(acc[k]||0)+c[k];}return acc;},{});
-    const t=computeMetrics(totals);
-    $('#all-agents-card').innerHTML=`
-      <h3 class="panel-title">${state.agentType==='All'?'All Agents*':state.agentType}</h3>
-      <div class="stat-row"><span>Contacted</span><span>${fmt(t.Contacted)}</span></div>
-      <div class="stat-row"><span>Replies</span><span>${fmt(t.Replies)}</span></div>
-      <div class="stat-row"><span>Appts/Leads</span><span>${fmt(t['Appointments / Leads'])}</span></div>
-      <div class="stat-row"><span>Sold</span><span>${fmt(t.Sold)}</span></div>`;
-}
-
-function renderPipelineStatus(){
-    const statuses = DATA.auditStatusTotals||[];
-    const total = statuses.reduce((s,x)=>s+x.Count,0);
-    $('#pipeline-status-panel').innerHTML = `
-    const statuses=DATA.auditStatusTotals||[];
-    const total=statuses.reduce((s,x)=>s+x.Count,0);
-    $('#pipeline-status-panel').innerHTML=`
-     <h3 class="panel-title">Pipeline Status</h3>
-      <div id="pipeline-status-list">
-        ${statuses.map(s=>`
-          <div class="pipeline-status-item">
-            <div class="status-header">
-              <span class="status-label"><span class="status-dot" style="background:${PIPELINE_COLORS[s.Status]||PIPELINE_COLORS.default}"></span>${s.Status}</span>
-              <span><strong>${fmt(s.Count)}</strong> (${nicePct(pct(s.Count,total))})</span>
-            </div>
-            <div class="progress-bar"><div class="progress-bar-inner" style="width:${pct(s.Count,total)}%;background:${PIPELINE_COLORS[s.Status]||PIPELINE_COLORS.default}"></div></div>
-          </div>`).join('')}
-      </div>
-      <div class="stat-row" style="padding-top:16px"><span class="label">Total Contacts</span><span class="value">${fmt(total)}</span></div>`;
-      ${statuses.map(s=>`
-        <div class="stat-row"><span>${s.Status}</span>
-          <span>${fmt(s.Count)} (${nicePct(pct(s.Count,total))})</span>
-        </div>`).join('')}
-      <div class="stat-row"><span>Total</span><span>${fmt(total)}</span></div>`;
-}
-
-  function renderAudit(){
-    const agents = ['All Agents*', ...getAgentData(state.range).map(a=>a.name)];
-    $('#audit-tabs').innerHTML = agents.map(n=>`<div class="audit-tab ${n===state.auditAgent?'active':''}" data-agent="${n}">${n}</div>`).join('');
-
-    const allStatuses = DATA.auditStatusTotals||[];
-    $('#audit-status-overview').innerHTML = `
-      <h4 class="sub-panel-title">Status Overview</h4>
-      ${allStatuses.map(s=>`<div class="stat-row"><span class="label">${s.Status}</span><span class="value">${fmt(s.Count)}</span></div>`).join('')}
-      <div class="stat-row" style="font-weight:700"><span class="label">Total</span><span class="value">${fmt(allStatuses.reduce((t,s)=>t+s.Count,0))}</span></div>`;
-
-    const aps = DATA.auditByAgent||[];
-    $('#audit-agent-performance').innerHTML = `
-      <h4 class="sub-panel-title">Agent Performance</h4>
-      ${aps.map(ap=>`
-        <div class="agent-perf-item">
-          <h5>${ap.agent}</h5>
-          <div class="agent-perf-details">
-            ${ap.totals.map(t=>`${t.Status}: <strong>${fmt(t.Count)}</strong>`).join('&nbsp;&nbsp;')}
-          </div>
-        </div>`).join('')}`;
-  function renderAll(){
-    renderKPIs();renderMainChart();renderAllAgentsCard();renderPipelineStatus();
-}
-
-  function renderContacts(){
-    const grid = $('#contacts-grid'); const btn = $('#load-more-contacts'); const loading = $('#loading');
-    loading.style.display='none'; grid.style.display='grid'; btn.style.display='block';
-
-    const all = DATA.allContacts||[];
-    const query = (document.getElementById('contact-search').value||'').toLowerCase();
-    const filtered = all.filter(c => (c.name||'').toLowerCase().includes(query) || (c.id||'').toLowerCase().includes(query));
-    grid.innerHTML = filtered.slice(0, 10).map(c=>`
-      <div class="contact-card">
-        <div class="name">${c.name||'-'}</div>
-        <div class="id">ID: ${c.id||'-'}</div>
-        ${c.tag?`<div class="tag">${c.tag}</div>`:''}
-        <button class="btn-details">View Details</button>
-      </div>`).join('');
+    if(chart) chart.destroy();
+    chart = new ApexCharts($('#main-chart'), options);
+    chart.render();
   }
 
-  function wireUI(){
-    document.getElementById('refresh').addEventListener('click', ()=> window.location.reload());
-    document.getElementById('range-select').addEventListener('change', e => { state.range=e.target.value; renderKPIs(); renderAllAgentsCard(); renderMainChart(); sendHeight(); });
-    document.getElementById('metric-select').addEventListener('change', e => { state.metric=e.target.value; renderMainChart(); sendHeight(); });
-    document.getElementById('agent-select').addEventListener('change', e => { state.agentType=e.target.value; renderMainChart(); sendHeight(); });
-    document.getElementById('chart-type-select').addEventListener('change', e => { state.chartType=e.target.value; renderMainChart(); sendHeight(); });
-    document.getElementById('show-all-btn').addEventListener('click', ()=>{ state.agentType='All'; document.getElementById('agent-select').value='All'; renderMainChart(); sendHeight(); });
-    document.getElementById('audit-tabs').addEventListener('click', e=>{ if(e.target.classList.contains('audit-tab')){ state.auditAgent=e.target.dataset.agent; renderAudit(); sendHeight(); }});
-    document.getElementById('contact-search').addEventListener('input', ()=>{ renderContacts(); sendHeight(); });
+  function renderSummaryAndPipeline(){
+    const rows = getAgents(state.range);
+    const rowsD = rows.map(withDerived);
+
+    const selected = (state.agent!=='All')
+      ? rowsD.find(r=>r.name===state.agent) || withDerived({Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0})
+      : withDerived(totalOf(rows));
+
+    // Summary card (changes with agent)
+    $('#summary-card').innerHTML = `
+      <h3 style="margin:0 0 12px">${state.agent==='All'?'All Agents*':state.agent}</h3>
+      <div class="stat-row"><span class="muted">Contacted</span><span>${fmt(selected.Contacted)}</span></div>
+      <div class="stat-row"><span class="muted">Replies</span><span>${fmt(selected.Replies)}</span></div>
+      <div class="stat-row"><span class="muted">Appointments / Leads</span><span>${fmt(selected['Appointments / Leads'])}</span></div>
+      <div class="stat-row"><span class="muted">Sold</span><span>${fmt(selected.Sold)}</span></div>
+      <div class="stat-row"><span class="muted">Reply %</span><span>${p1(selected['Reply %'])}</span></div>
+      <div class="stat-row"><span class="muted">Contacted → Appt/Lead %</span><span>${p1(selected['Contacted → Appt/Lead %'])}</span></div>
+      <div class="stat-row"><span class="muted">Appt/Lead → Close %</span><span>${p1(selected['Appt/Lead → Close %'])}</span></div>
+    `;
+
+    // Pipeline card (filters to agent when possible)
+    const allStatuses = DATA.auditStatusTotals||[];
+    const byAgent = DATA.auditByAgent||[];
+    const agentBlock = byAgent.find(x=>x.agent===state.agent);
+    const statuses = (state.agent!=='All' && agentBlock) ? agentBlock.totals : allStatuses;
+    const total = statuses.reduce((s,x)=> s + (x.Count||0), 0);
+    $('#pipeline-card').innerHTML = `
+      <h3 style="margin:0 0 12px">Pipeline Status ${state.agent!=='All' ? `– ${state.agent}` : ''}</h3>
+      ${statuses.map(s=>`
+        <div class="stat-row">
+          <span class="muted">${s.Status}</span>
+          <span>${fmt(s.Count||0)} (${p1(pct(s.Count||0,total||0))})</span>
+        </div>`).join('')}
+      <div class="stat-row"><span class="muted">Total</span><span>${fmt(total)}</span></div>
+    `;
   }
 
   function populateSelectors(){
-    document.getElementById('metric-select').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
-    const agentNames = ['All', ...getAgentData(state.range).map(a=>a.name)];
-    document.getElementById('agent-select').innerHTML = agentNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+    $('#metric-select').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
+    const names = ['All', ...getAgents(state.range).map(a=>a.name)];
+    $('#agent-select').innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
   }
 
-  // ---------- public render called after data arrives
+  function wireUI(){
+    $('#refresh').addEventListener('click', ()=> location.reload());
+    $('#range-select').addEventListener('change', e=>{ state.range=e.target.value; populateSelectors(); renderKPIs(); renderMainChart(); renderSummaryAndPipeline(); });
+    $('#metric-select').addEventListener('change', e=>{ state.metric=e.target.value; renderMainChart(); });
+    $('#agent-select').addEventListener('change', e=>{ state.agent=e.target.value; renderMainChart(); renderSummaryAndPipeline(); });
+    $('#chart-type-select').addEventListener('change', e=>{ state.chart=e.target.value; renderMainChart(); });
+    $('#show-all-btn').addEventListener('click', ()=>{ state.agent='All'; $('#agent-select').value='All'; renderMainChart(); renderSummaryAndPipeline(); });
+  }
+
+  // public entry
   window.renderDashboard = function(payload){
     try{
-      DATA = (typeof payload==='string') ? JSON.parse(payload||'{}') : (payload||{});
-      renderHeader(); populateSelectors(); renderKPIs(); renderMainChart(); renderAllAgentsCard(); renderPipelineStatus(); renderAudit(); renderContacts();
-      sendHeight();
-    }catch(err){ console.error('renderDashboard failed', err); }
-  window.renderDashboard=function(payload){
-    DATA=(typeof payload==='string')?JSON.parse(payload):payload;
-    renderAll();
-};
+      DATA = typeof payload==='string' ? JSON.parse(payload||'{}') : (payload||{});
+      renderHeader();
+      populateSelectors();
+      renderKPIs();
+      renderMainChart();
+      renderSummaryAndPipeline();
+      setTimeout(()=> parent.postMessage({type:'VQ_IFR_HEIGHT',height:document.body.scrollHeight},'*'), 0);
+    }catch(e){ console.error(e); }
+  };
 
-  // ---------- height to parent
-  function sendHeight(){ setTimeout(()=>{ parent.postMessage({type:'VQ_IFR_HEIGHT', height: document.body.scrollHeight }, '*'); }, 0); }
-  window.addEventListener('resize', ()=> sendHeight());
-
-  // ---------- accept metrics via postMessage
+  // accept postMessage
   window.addEventListener('message', (e)=>{
-    const msg = e && e.data;
-    if (!msg || msg.type!=='VQ_METRICS') return;
-    window.renderDashboard(msg.payload);
+    if(e?.data?.type==='VQ_METRICS') window.renderDashboard(e.data.payload);
   });
 
-  // initial UI shell setup (before data)
-  document.addEventListener('DOMContentLoaded', ()=>{
-    $('#biz-name').textContent = 'Loading…';
-    populateSelectors();
-    wireUI();
-    sendHeight();
-  document.addEventListener('DOMContentLoaded',()=>{
-    renderAll();
-    document.getElementById('range-select').innerHTML=`<option value="24h">24h</option><option value="7d">7d</option><option value="30d">30d</option><option value="90d">90d</option>`;
-    document.getElementById('metric-select').innerHTML=METRICS.map(m=>`<option>${m.label}</option>`).join('');
-    document.getElementById('agent-select').innerHTML=`<option>All</option>`;
-    ['range','metric','agent','chart-type'].forEach(id=>{
-      document.getElementById(id+'-select').addEventListener('change',e=>{
-        state[id.replace('-select','')]=e.target.value;
-        renderAll();
-      });
-    });
-});
+  // boot UI skeleton
+  document.addEventListener('DOMContentLoaded', ()=>{ wireUI(); });
 })();
 </script>
+</body>
+</html>
