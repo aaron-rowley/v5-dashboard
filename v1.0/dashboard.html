@@ -15,46 +15,58 @@
     *{box-sizing:border-box}
     html,body{background:var(--bg-main); color:var(--text); margin:0; font-family:var(--font); height:auto; overflow:visible}
 
-    /* ================= Loader (spinner + slow progress bar) ================= */
+    /* ===== Loader: spinner + progress bar ===== */
     body.loading .wrap{display:none;}
     body.loading #loader{display:grid;}
-    #loader{position:fixed; inset:0; display:none; place-items:center; background:rgba(15,17,21,.85); z-index:9999}
-    .load-inner{display:flex; flex-direction:column; align-items:center; gap:14px; transform:translateY(-20px)}
-    .spinner{width:88px; height:88px; border-radius:50%; background:radial-gradient(closest-side,rgba(237,108,3,.18),rgba(237,108,3,.04) 55%,transparent 60%);
-      position:relative; box-shadow:0 0 60px rgba(237,108,3,.25)}
-    .spinner:after{content:""; position:absolute; inset:10px; border-radius:50%; border:6px solid transparent; border-top-color:var(--primary);
-      filter:drop-shadow(0 0 8px rgba(237,108,3,.9)); animation:spin 1s linear infinite}
-    .progress-wrap{width:230px; height:8px; border-radius:999px; background:transparent; border:1px solid var(--line); overflow:hidden}
-    .progress{height:100%; width:0%; background:linear-gradient(90deg, rgba(237,108,3,.95), rgba(237,108,3,.7)); box-shadow:0 0 16px rgba(237,108,3,.35); transition:width .6s ease}
-    .load-text{color:#d9dde6; font-weight:700; letter-spacing:.2px}
+    #loader{
+      position:fixed; inset:0; display:none; place-items:center; z-index:9999;
+      background:rgba(15,17,21,.92); backdrop-filter:saturate(115%) blur(1.5px)
+    }
+    .spinner{
+      width:88px; height:88px; border-radius:50%;
+      background:radial-gradient(closest-side,rgba(237,108,3,.18),rgba(237,108,3,.06) 55%,transparent 60%);
+      position:relative; box-shadow:0 0 60px rgba(237,108,3,.25); margin-bottom:18px
+    }
+    .spinner:after{
+      content:""; position:absolute; inset:10px; border-radius:50%;
+      border:6px solid transparent; border-top-color:var(--primary);
+      filter:drop-shadow(0 0 8px rgba(237,108,3,.9)); animation:spin 1s linear infinite
+    }
     @keyframes spin{to{transform:rotate(360deg)}}
+    .loadbar{width:380px; max-width:82vw; height:8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); overflow:hidden}
+    .loadbar>span{display:block; width:0%; height:100%; background:linear-gradient(90deg, rgba(237,108,3,.2), rgba(237,108,3,.9));
+      box-shadow:0 0 14px rgba(237,108,3,.45); animation:slowfill 30s linear forwards}
+    @keyframes slowfill{from{width:0%} to{width:100%}}
+    #loadtext{margin-top:12px; color:#d6dbe5; font-weight:700; letter-spacing:.2px}
 
-    /* ================= Layout ================= */
+    /* ===== Layout & UI ===== */
     .wrap{width:100%; max-width:100%; margin:24px auto 80px; padding:0 16px}
     .section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
     .section-title h1{margin:0; font-size:20px; font-weight:800}
     .hint{color:var(--muted); font-size:.92rem}
     .pill{display:inline-flex; gap:8px; align-items:center; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
       border-radius:999px; padding:8px 12px; font-weight:700}
-    .btn{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer}
+    .btn{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+      border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer}
     .btn:hover{background:var(--primary); border-color:var(--primary-dark)}
     .divider{height:1px; background:var(--line); margin:12px 0 18px}
 
-    /* ================= Controls ================= */
+    /* Controls */
     .controls{display:grid; grid-template-columns:repeat(12,1fr); gap:12px; align-items:center;
       background:var(--bg-panel); border-radius:var(--radius); padding:12px; margin:8px 0 10px}
     .ctrl{grid-column:span 3; display:flex; flex-direction:column; gap:6px; min-width:0}
     .ctrl.small{grid-column:span 2}
     .label{color:var(--muted); font-size:.75rem; letter-spacing:.02em}
-    select{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 14px; font-weight:600; width:100%}
+    select{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+      border-radius:10px; padding:10px 14px; font-weight:600; width:100%}
 
-    /* ================= Legend keys (tiny status dots) ================= */
-    .keys{display:flex; align-items:center; flex-wrap:wrap; gap:14px; margin:2px 0 14px}
-    .keys-label{color:var(--muted); font-size:.78rem; font-weight:800; margin-right:4px}
-    .key-item{display:inline-flex; align-items:center; gap:6px; font-weight:700}
-    .dot{width:10px; height:10px; border-radius:50%}
+    /* Keys row (tiny dot + label) */
+    .keys{display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:2px 0 14px}
+    .key{display:inline-flex; align-items:center; gap:8px; font-weight:700}
+    .key .dot{width:10px; height:10px; border-radius:50%}
+    .keygroup-title{color:var(--muted); font-size:.78rem; margin-right:6px; opacity:.9}
 
-    /* ================= KPIs ================= */
+    /* KPI cards */
     .grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:8px 0 16px}
     .kpi{background:var(--bg-panel); border-radius:var(--radius); padding:18px; transition:box-shadow .25s}
     .kpi h4{margin:0 0 10px; color:var(--muted); font-weight:600; font-size:.95rem}
@@ -63,21 +75,36 @@
     .kpi .pillline strong{color:var(--primary)}
     .kpi.glow{box-shadow:0 0 0 2px var(--primary), 0 0 24px rgba(237,108,3,.35)}
 
-    /* ================= Cards + chart headers ================= */
+    /* Cards + chart headers */
     .card{background:var(--bg-panel); border-radius:var(--radius); padding:14px}
     .section{background:var(--bg-panel); border-radius:var(--radius); padding:14px; margin-top:14px}
     .chart-header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
     .chart-title{font-weight:800; letter-spacing:.2px; display:flex; align-items:center; gap:8px}
     .chart-sub{color:var(--muted); font-size:.92rem}
     .chart-ctrls{display:flex; align-items:center; gap:10px}
-    .info{display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%;
-      border:1px solid var(--line); color:#c9ced8; font-size:12px; cursor:help; opacity:.85}
 
-    /* ================= Pipeline table ================= */
+    /* “i” tooltip */
+    .info{position:relative; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%;
+      border:1px solid var(--line); color:#c9ced8; font-size:12px; cursor:help; opacity:.9}
+    .info[data-tip]::after{
+      content:attr(data-tip); position:absolute; left:50%; transform:translateX(-50%);
+      bottom:calc(100% + 8px); white-space:nowrap; background:#101215; color:#e8ecf4; border:1px solid var(--line);
+      padding:6px 8px; border-radius:8px; font-size:.78rem; opacity:0; pointer-events:none; transition:.18s; box-shadow:var(--shadow)
+    }
+    .info:hover::after{opacity:1}
+
+    /* Pipeline table */
     .pipe-row{display:grid; grid-template-columns:1.5fr .7fr 3fr; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line)}
     .pipe-row:last-child{border-bottom:none}
     .bar{height:8px; background:var(--bg-panel-2); border-radius:999px; overflow:hidden}
     .bar>span{display:block; height:100%; border-radius:999px}
+
+    /* Pipeline status filter chips */
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px}
+    .chip{display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; user-select:none; font-weight:700}
+    .chip .dot{width:8px; height:8px; border-radius:50%}
+    .chip.active{box-shadow:0 0 0 2px rgba(237,108,3,.6) inset}
 
     @media (max-width:980px){
       .grid-kpi{grid-template-columns:1fr 1fr}
@@ -93,117 +120,129 @@
   </style>
 </head>
 <body class="loading">
-<div id="loader" aria-live="polite">
-  <div class="load-inner">
-    <div class="spinner" aria-hidden="true"></div>
-    <div class="progress-wrap" aria-hidden="true"><div class="progress" id="progress-bar"></div></div>
-    <div class="load-text" id="load-text">Fetching data…</div>
-  </div>
-</div>
-
-<div class="wrap">
-  <div class="section-title">
-    <div>
-      <h1 id="company">—</h1>
-      <div class="hint">Last updated on: <span id="last-updated">—</span></div>
-    </div>
-    <div style="display:flex; gap:10px; align-items:center">
-      <div class="pill" id="agent-pill" title="Which agent (or all) the metrics below reflect.">Agent: <strong id="agent-pill-name">All</strong></div>
-      <div class="pill" id="metric-pill" title="Which metric is emphasized and shown on the main chart.">Metric: <strong id="metric-pill-name">Reply %</strong></div>
-      <div class="pill" id="range-pill" title="Time window used to compute metrics.">Range: <strong id="range-pill-name">Last 24 Hours</strong></div>
-      <button class="btn" id="refresh-btn" title="Reload everything from the source.">Refresh metrics</button>
-    </div>
+  <div id="loader" aria-live="polite" aria-busy="true">
+    <div class="spinner"></div>
+    <div class="loadbar" aria-hidden="true"><span id="loadbar-fill"></span></div>
+    <div id="loadtext">Fetching data...</div>
   </div>
 
-  <div class="divider"></div>
-
-  <!-- Controls now: Range / Agent / Quick -->
-  <div class="controls" id="controls">
-    <div class="ctrl small">
-      <div class="label">Range</div>
-      <select id="range-select" aria-label="Select range">
-        <option value="24h">Last 24 Hours</option>
-        <option value="7d">Last 7 Days</option>
-        <option value="30d">Last 30 Days</option>
-        <option value="90d">Last 90 Days</option>
-      </select>
-    </div>
-    <div class="ctrl small">
-      <div class="label">Agent</div>
-      <select id="agent-select" aria-label="Select agent"></select>
-    </div>
-    <div class="ctrl small">
-      <div class="label">Quick</div>
-      <button class="btn" id="show-all" title="Reset to show all agents.">Show All</button>
-    </div>
-  </div>
-
-  <!-- Tiny legend (agents + range) -->
-  <div class="keys" id="keys-row"></div>
-
-  <!-- KPIs -->
-  <div class="grid-kpi">
-    <div class="kpi" id="kpi-contacted-card" title="Total outbound contacts made in the selected range."><h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div></div>
-    <div class="kpi" id="kpi-replies-card" title="Total replies received in the selected range."><h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="pillline">Reply %: <strong id="kpi-replyPct">0%</strong></div></div>
-    <div class="kpi" id="kpi-leads-card" title="Appointments or leads created in the selected range."><h4>Appointments / Leads</h4><div class="big" id="kpi-leads">0</div><div class="pillline">Contacted → Appt/Lead %: <strong id="kpi-c2l">0%</strong></div></div>
-    <div class="kpi" id="kpi-sold-card" title="Closed deals during the selected range."><h4>Closed</h4><div class="big" id="kpi-sold">0</div><div class="pillline">Appt/Lead → Close %: <strong id="kpi-l2c">0%</strong></div></div>
-  </div>
-
-  <!-- TOP: Agent performance -->
-  <div class="card" id="chart-card" aria-label="Agent performance section">
-    <div class="chart-header">
+  <div class="wrap">
+    <div class="section-title">
       <div>
-        <div class="chart-title" id="main-chart-title">—</div>
-        <div class="chart-sub" id="main-chart-sub">—</div>
+        <h1 id="company">—</h1>
+        <div class="hint">Last updated on: <span id="last-updated">—</span></div>
       </div>
-      <div class="chart-ctrls">
-        <span class="info" title="Pick the metric shown on this chart and highlighted in KPIs.">i</span>
-        <div class="label">Metric</div>
-        <select id="metric-select-top" aria-label="Select metric"></select>
-        <span class="info" title="Change the visualization for this chart.">i</span>
-        <div class="label">View as</div>
-        <select id="chart-select-top" aria-label="Select chart type">
-          <option value="funnel">Funnel</option>
-          <option value="bar">Bar (vertical)</option>
-          <option value="bar-h">Bar (horizontal)</option>
-          <option value="donut">Donut</option>
-          <option value="line">Line</option>
+      <div style="display:flex; gap:10px; align-items:center">
+        <div class="pill" id="agent-pill" title="Which agent’s metrics are shown below.">Agent: <strong id="agent-pill-name">All</strong></div>
+        <div class="pill" id="metric-pill" title="Chosen metric for the top chart and KPI highlighting.">Metric: <strong id="metric-pill-name">Reply %</strong></div>
+        <div class="pill" id="range-pill" title="Time window for all metrics & charts.">Range: <strong id="range-pill-name">Last 24 Hours</strong></div>
+        <button class="btn" id="refresh-btn" title="Re-fetch the latest metrics">Refresh metrics</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Controls -->
+    <div class="controls" id="controls">
+      <div class="ctrl small">
+        <div class="label">Range</div>
+        <select id="range-select">
+          <option value="24h">Last 24 Hours</option>
+          <option value="7d">Last 7 Days</option>
+          <option value="30d">Last 30 Days</option>
+          <option value="90d">Last 90 Days</option>
         </select>
       </div>
-    </div>
-    <div id="main-chart"></div>
-  </div>
-
-  <!-- Divider: Agent vs Sales -->
-  <div class="divider" title="Agent performance (above) vs Sales pipeline performance (below)"></div>
-
-  <!-- BOTTOM: Sales pipeline performance -->
-  <div class="section" aria-label="Sales pipeline section">
-    <div class="chart-header" style="margin-bottom:8px">
-      <div>
-        <div class="chart-title" id="pipe-title">Sales pipeline performance</div>
-        <div class="chart-sub" id="pipe-sub">—</div>
+      <div class="ctrl small">
+        <div class="label">Agent</div>
+        <select id="agent-select"></select>
       </div>
-      <div class="chart-ctrls">
-        <span class="info" title="Select how to display the pipeline distribution.">i</span>
-        <div class="label">View as</div>
-        <select id="pipe-view" aria-label="Select pipeline view">
-          <option value="table">Table</option>
-          <option value="bars">Horizontal bars</option>
-          <option value="donut">Donut</option>
-          <option value="line">Line</option>
-        </select>
+      <div class="ctrl small">
+        <div class="label">Quick</div>
+        <button class="btn" id="show-all">Show All</button>
       </div>
     </div>
-    <div id="pipeline-table"></div>
-    <div id="pipeline-chart" style="display:none"></div>
-    <div class="hint" id="pipe-total" style="margin-top:8px"></div>
+
+    <!-- Keys -->
+    <div class="keys" id="keys-row"></div>
+
+    <!-- KPIs -->
+    <div class="grid-kpi">
+      <div class="kpi" id="kpi-contacted-card" title="How many prospects were contacted.">
+        <h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div>
+      </div>
+      <div class="kpi" id="kpi-replies-card" title="How many replies we received.">
+        <h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="pillline">Reply %: <strong id="kpi-replyPct">0%</strong></div>
+      </div>
+      <div class="kpi" id="kpi-leads-card" title="Leads or appointments created from replies.">
+        <h4>Appointments / Leads</h4><div class="big" id="kpi-leads">0</div>
+        <div class="pillline">Replies → Appt/Lead %: <strong id="kpi-r2l">0%</strong></div>
+      </div>
+      <div class="kpi" id="kpi-sold-card" title="Deals closed.">
+        <h4>Closed</h4><div class="big" id="kpi-sold">0</div><div class="pillline">Appt/Lead → Close %: <strong id="kpi-l2c">0%</strong></div>
+      </div>
+    </div>
+
+    <!-- TOP: Agent performance -->
+    <div class="card" id="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title" id="main-chart-title">—</div>
+          <div class="chart-sub" id="main-chart-sub">—</div>
+        </div>
+        <div class="chart-ctrls">
+          <span class="info" data-tip="Pick the metric to compare (affects KPI glow + chart).">i</span>
+          <div class="label">Metric</div>
+          <select id="metric-select-top"></select>
+          <span class="info" data-tip="Switch the visualization for the agent chart.">i</span>
+          <div class="label">View as</div>
+          <select id="chart-select-top">
+            <option value="funnel">Funnel</option>
+            <option value="bar">Bar (vertical)</option>
+            <option value="bar-h">Bar (horizontal)</option>
+            <option value="donut">Donut</option>
+            <option value="line">Line</option>
+          </select>
+        </div>
+      </div>
+      <div id="main-chart"></div>
+    </div>
+
+    <!-- Divider: Agent vs Sales -->
+    <div class="divider"></div>
+
+    <!-- BOTTOM: Sales pipeline performance -->
+    <div class="section">
+      <div class="chart-header" style="margin-bottom:4px">
+        <div>
+          <div class="chart-title" id="pipe-title">Sales pipeline performance</div>
+          <div class="chart-sub" id="pipe-sub">—</div>
+        </div>
+        <div class="chart-ctrls">
+          <span class="info" data-tip="Visualize how contacts are distributed across statuses.">i</span>
+          <div class="label">View as</div>
+          <select id="pipe-view">
+            <option value="table">Table</option>
+            <option value="bars">Horizontal bars</option>
+            <option value="donut">Donut</option>
+            <option value="line">Line</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Status filter chips -->
+      <div class="label">Filter statuses</div>
+      <div class="chips" id="status-chips"></div>
+
+      <div id="pipeline-table"></div>
+      <div id="pipeline-chart" style="display:none"></div>
+      <div class="hint" id="pipe-total" style="margin-top:8px"></div>
+    </div>
   </div>
-</div>
 
 <script>
 (function(){
-  // ===== helpers =====
+  /* ===== helpers ===== */
   const $ = s => document.querySelector(s);
   const fmtInt = n => new Intl.NumberFormat().format(Math.round(Number(n)||0));
   const fmt2 = n => { const v = Number(n)||0; return Math.abs(v - Math.round(v)) < 0.005 ? fmtInt(v) : v.toFixed(2); };
@@ -214,14 +253,14 @@
   const rangeLabel = r => ({'24h':'Last 24 Hours','7d':'Last 7 Days','30d':'Last 30 Days','90d':'Last 90 Days'})[r]||r;
   const chartLabel = c => ({'funnel':'Funnel','bar':'Bar (vertical)','bar-h':'Bar (horizontal)','donut':'Donut','line':'Line'})[c]||c;
 
-  // stable agent palette via hash → index
+  // stable agent palette
   const PALETTE = ['#ed6c03','#22c55e','#8b5cf6','#3b82f6','#14b8a6','#ef4444','#eab308','#a855f7'];
   const agentColor = name => { if(!name) return '#6B7280'; let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length]; };
 
   const RANGE_COLORS = {'24h':'#ed6c03','7d':'#14b8a6','30d':'#3b82f6','90d':'#8b5cf6'};
   const METRIC_ACCENTS = {
     'Reply %':'#ed6c03',
-    'Contacted → Appt/Lead %':'#8b5cf6',
+    'Replies → Appt/Lead %':'#8b5cf6',
     'Appt/Lead → Close %':'#22c55e',
     'Contacted':'#3b82f6',
     'Replies':'#ed6c03',
@@ -231,11 +270,11 @@
 
   let DATA = {};
   let mainChart = null, pipeChart = null;
-  const state = { range:'24h', metric:'Reply %', agent:'All', chart:'funnel', pipeView:'table' };
+  const state = { range:'24h', metric:'Reply %', agent:'All', chart:'funnel', pipeView:'table', pipeInclude:new Set() };
 
   const METRICS = [
     { label:'Reply %', key:'Reply %', pct:true },
-    { label:'Contacted → Appt/Lead %', key:'Contacted → Appt/Lead %', pct:true },
+    { label:'Replies → Appt/Lead %', key:'Replies → Appt/Lead %', pct:true },
     { label:'Appt/Lead → Close %', key:'Appt/Lead → Close %', pct:true },
     { label:'Contacted', key:'Contacted' },
     { label:'Replies', key:'Replies' },
@@ -255,15 +294,34 @@
   const addDerived = (o) => ({
     ...o,
     'Reply %': pct(o.Replies, o.Contacted),
-    'Contacted → Appt/Lead %': pct(o['Appointments / Leads'], o.Contacted),
+    'Replies → Appt/Lead %': pct(o['Appointments / Leads'], o.Replies),
     'Appt/Lead → Close %': pct(o.Sold, o['Appointments / Leads'])
   });
 
-  // ===== UI color accents =====
+  /* ===== loader helpers ===== */
+  function showLoader(flag){
+    document.body.classList.toggle('loading', !!flag);
+    if(flag){
+      const f = $('#loadbar-fill');
+      f.style.animation = 'none'; // restart
+      // force reflow
+      void f.offsetWidth;
+      f.style.animation = '';
+    }
+  }
+  function finishLoader(){
+    const f = $('#loadbar-fill');
+    f.style.animation = 'none';
+    f.style.transition = 'width .35s ease-out';
+    f.style.width = '100%';
+    setTimeout(()=>{ showLoader(false); f.style.transition=''; f.style.width='0%'; }, 380);
+  }
+
+  /* ===== UI color accents ===== */
   function setMetricAccent(){
     const color = METRIC_ACCENTS[state.metric] || '#ed6c03';
-    const metricPill = $('#metric-pill');
     $('#metric-pill-name').textContent = state.metric;
+    const metricPill = $('#metric-pill');
     metricPill.style.borderColor = color;
     metricPill.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 18px ${hexToRgba(color,.35)}`;
 
@@ -272,14 +330,14 @@
     if(state.metric==='Contacted') $('#kpi-contacted-card').classList.add('glow');
     if(state.metric==='Replies' || state.metric==='Reply %') { $('#kpi-replies-card').classList.add('glow'); if(state.metric==='Reply %') $('#kpi-contacted-card').classList.add('glow'); }
     if(state.metric==='Appointments / Leads') $('#kpi-leads-card').classList.add('glow');
-    if(state.metric==='Contacted → Appt/Lead %') { $('#kpi-contacted-card').classList.add('glow'); $('#kpi-leads-card').classList.add('glow'); }
+    if(state.metric==='Replies → Appt/Lead %') { $('#kpi-replies-card').classList.add('glow'); $('#kpi-leads-card').classList.add('glow'); }
     if(state.metric==='Appt/Lead → Close %') { $('#kpi-leads-card').classList.add('glow'); $('#kpi-sold-card').classList.add('glow'); }
     if(state.metric==='Sold') $('#kpi-sold-card').classList.add('glow');
   }
   function setRangeAccent(){
     const color = RANGE_COLORS[state.range] || '#6B7280';
-    const pill = $('#range-pill');
     $('#range-pill-name').textContent = rangeLabel(state.range);
+    const pill = $('#range-pill');
     pill.style.borderColor = color;
     pill.style.boxShadow = `0 0 0 2px ${color} inset`;
   }
@@ -291,20 +349,19 @@
   }
   function hexToRgba(hex,a){ const v=hex.replace('#',''); const r=parseInt(v.slice(0,2),16), g=parseInt(v.slice(2,4),16), b=parseInt(v.slice(4,6),16); return `rgba(${r},${g},${b},${a||1})`; }
 
-  // ===== Legend (tiny dots) =====
+  /* Keys row */
   function renderKeys(){
     const el = $('#keys-row');
-    const items = [];
-    items.push(`<span class="keys-label">Agents</span>`);
-    const list = state.agent==='All' ? getAgents().map(a=>a.name) : [state.agent];
-    for(const name of list){
-      items.push(`<span class="key-item"><span class="dot" style="background:${agentColor(name)}"></span>${name}</span>`);
-    }
-    items.push(`<span class="key-item"><span class="dot" style="background:${RANGE_COLORS[state.range]||'#6B7280'}"></span>${rangeLabel(state.range)}</span>`);
-    el.innerHTML = items.join('');
+    const bits = [];
+    bits.push(`<span class="keygroup-title">Agents</span>`);
+    const names = state.agent==='All' ? getAgents().map(a=>a.name) : [state.agent];
+    for(const n of names){ bits.push(`<span class="key"><span class="dot" style="background:${agentColor(n)}"></span>${n}</span>`); }
+    bits.push(`<span class="keygroup-title" style="margin-left:10px">Range</span>`);
+    bits.push(`<span class="key"><span class="dot" style="background:${RANGE_COLORS[state.range]||'#6B7280'}"></span>${rangeLabel(state.range)}</span>`);
+    el.innerHTML = bits.join('');
   }
 
-  // ===== Populate & KPIs =====
+  /* ===== Populate & KPIs ===== */
   function populateSelectors(){
     // top metric/chart selects
     $('#metric-select-top').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
@@ -331,7 +388,7 @@
     $('#kpi-leads').textContent = fmtInt(base['Appointments / Leads']);
     $('#kpi-sold').textContent = fmtInt(base.Sold);
     $('#kpi-replyPct').textContent = nicePct(d['Reply %']);
-    $('#kpi-c2l').textContent = nicePct(d['Contacted → Appt/Lead %']);
+    $('#kpi-r2l').textContent = nicePct(d['Replies → Appt/Lead %']);
     $('#kpi-l2c').textContent = nicePct(d['Appt/Lead → Close %']);
   }
 
@@ -350,7 +407,7 @@
     $('#pipe-sub').textContent = `Distribution of contact statuses · ${state.agent==='All'? 'All agents' : state.agent}`;
   }
 
-  // ===== Charts =====
+  /* ===== Charts ===== */
   function renderMainChart(){
     describeMain();
     const agents = getAgents().map(addDerived);
@@ -376,7 +433,7 @@
       tooltip:{theme:'dark', y:{formatter:(val)=> isPct ? `${Math.round(Number(val)||0)}%` : fmt2(val)}},
       legend:{labels:{colors:'#c9ced8'}},
       xaxis:{ labels:{ style:{colors:'#c9ced8'}, rotate:0, trim:true }, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}} },
-      yaxis:{ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) }, min:0, title:{ text: isPct ? 'Percent' : 'Count', style:{color:'#c9ced8'} } }
+      yaxis:{ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) }, min:0 }
     };
 
     let opts = {...baseOpts};
@@ -392,11 +449,11 @@
       opts.colors=[accent];
       opts.chart.type='bar';
       opts.plotOptions={bar:{horizontal:true, borderRadius:6, barHeight:'40%', dataLabels:{position:'center'}}};
+      // NaN fix: labels on Y are categories, do NOT format as percent
+      opts.yaxis={ labels:{ style:{colors:'#c9ced8'} } };
       opts.dataLabels={enabled:true, style:{fontWeight:700}, formatter:(v,{dataPointIndex})=> fmt2(seriesData[dataPointIndex].y)};
       opts.series=[{name:state.metric, data:seriesData}];
-      // Force counts for funnel to avoid NaN% labels
-      opts.yaxis={ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> fmt2(v) }, min:0, title:{ text:'Count', style:{color:'#c9ced8'} } };
-      opts.xaxis={...opts.xaxis, title:{text:'Stages', style:{color:'#c9ced8'}}, labels:{style:{colors:'#c9ced8'}}};
+      opts.xaxis={...opts.xaxis, title:{text:'Count', style:{color:'#c9ced8'}}, labels:{style:{colors:'#c9ced8'}}};
     } else if(usableType==='donut'){
       const sum = dataVals.reduce((a,b)=>a+(Number(b)||0),0);
       let series = dataVals.map(v=>Math.max(0, Number(v)||0));
@@ -420,9 +477,11 @@
       opts.colors = colors;
       opts.chart.type='bar';
       opts.plotOptions={bar:{horizontal:true, borderRadius:6, distributed, dataLabels:{position:'center'}}};
-      opts.xaxis={...opts.xaxis, categories:cats, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}};
+      // NaN fix: y is categories
+      opts.yaxis={ labels:{ style:{colors:'#c9ced8'} } };
+      opts.xaxis={...opts.xaxis, categories:cats, title:{text: isPct?'Percent':'Count', style:{color:'#c9ced8'}}};
       opts.dataLabels={enabled:true, style:{fontWeight:700}, formatter:(v)=> isPct? `${Math.round(v)}%` : fmt2(v)};
-      opts.yaxis={ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) }, min:0, title:{text: isPct?'Percent':'Count', style:{color:'#c9ced8'}}};
+      opts.series=[{name:state.metric, data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     } else if(usableType==='bar'){
       const distributed = (state.agent==='All');
       const colors = distributed ? cats.map(n=>agentColor(n)) : [accent];
@@ -431,14 +490,11 @@
       opts.plotOptions={bar:{horizontal:false, borderRadius:6, columnWidth:'55%', distributed, dataLabels:{position:'top'}}};
       opts.dataLabels={enabled:true, offsetY:-8, style:{fontWeight:700}, formatter:(v)=> isPct? `${Math.round(v)}%` : fmt2(v)};
       opts.xaxis={...opts.xaxis, categories:cats, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}};
-      opts.yaxis={ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) }, min:0, title:{text: isPct?'Percent':'Count', style:{color:'#c9ced8'}}};
       opts.series=[{name:state.metric, data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     } else { // line
-      const color = accent;
-      opts.colors=[color];
+      opts.colors=[accent];
       opts.chart.type='line'; opts.stroke={curve:'smooth', width:3}; opts.markers={size:3};
       opts.xaxis={...opts.xaxis, categories:cats, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}};
-      opts.yaxis={ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) }, min:0, title:{text: isPct?'Percent':'Count', style:{color:'#c9ced8'}}};
       opts.series=[{name:(state.agent==='All'?state.metric:state.agent), data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     }
 
@@ -454,15 +510,47 @@
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
   }
 
+  /* ===== Pipeline data + status filter ===== */
   function getPipeTotals(){
     if(state.agent==='All') return (DATA.auditStatusTotals||[]);
     const agentBlock = (DATA.auditByAgent||[]).find(a=>a.agent===state.agent);
     return agentBlock ? agentBlock.totals || [] : [];
   }
+  function filteredPipeRows(rows){
+    if(!state.pipeInclude || state.pipeInclude.size===0) return rows;
+    return rows.filter(r=> state.pipeInclude.has(String(r.Status)));
+  }
+
+  function renderStatusChips(rows){
+    const container = $('#status-chips');
+    if(!rows.length){ container.innerHTML = '<span class="hint">No statuses.</span>'; return; }
+    const allStatuses = rows.map(r=>String(r.Status));
+    // init selection first time
+    if(state.pipeInclude.__init!==true){
+      state.pipeInclude = new Set(allStatuses); state.pipeInclude.__init = true;
+    }
+    const html = ['<span class="chip '+(state.pipeInclude.size===allStatuses.length?'active':'')+'" data-status="__ALL__"><span class="dot" style="background:#9ca3af"></span>All</span>']
+      .concat(allStatuses.map(s=>`<span class="chip ${state.pipeInclude.has(s)?'active':''}" data-status="${s}"><span class="dot" style="background:${agentColor(s)}"></span>${s}</span>`)).join('');
+    container.innerHTML = html;
+    container.querySelectorAll('.chip').forEach(ch=>{
+      ch.addEventListener('click', ()=>{
+        const key = ch.getAttribute('data-status');
+        if(key==='__ALL__'){ state.pipeInclude = new Set(allStatuses); }
+        else{
+          if(state.pipeInclude.has(key)) state.pipeInclude.delete(key); else state.pipeInclude.add(key);
+          if(state.pipeInclude.size===allStatuses.length){ /* no-op */ }
+        }
+        renderPipeline();
+      });
+    });
+  }
 
   function renderPipeline(){
     describePipe();
-    const rows = getPipeTotals();
+    const rawRows = getPipeTotals();
+    renderStatusChips(rawRows);
+
+    const rows = filteredPipeRows(rawRows);
     const total = rows.reduce((s,r)=>s+(Number(r.Count)||0),0);
     $('#pipe-total').textContent = `Total Contacts: ${fmtInt(total)}`;
 
@@ -491,26 +579,22 @@
       const base = { chart:{toolbar:{show:false}, parentHeightOffset:0, foreColor:'#c9ced8', dropShadow:{enabled:true, blur:2, opacity:.18}}, labels, colors, tooltip:{theme:'dark'}, legend:{labels:{colors:'#c9ced8'}} };
 
       if(view==='bars'){
-        const opts = { ...base, chart:{...base.chart, type:'bar'},
-          grid:{borderColor:LINE, strokeDashArray:4},
-          plotOptions:{bar:{horizontal:true, borderRadius:6, dataLabels:{position:'center'}}},
-          xaxis:{categories:labels, title:{text:'Status', style:{color:'#c9ced8'}}},
-          yaxis:{title:{text:'Count', style:{color:'#c9ced8'}}},
+        const opts = { ...base, chart:{...base.chart, type:'bar'}, plotOptions:{bar:{horizontal:true, borderRadius:6, dataLabels:{position:'center'}}},
+          xaxis:{categories:labels, title:{text:'Count', style:{color:'#c9ced8'}}},
+          yaxis:{ labels:{ style:{colors:'#c9ced8'} } },
           dataLabels:{enabled:true, style:{fontWeight:700}, formatter:(v)=>fmt2(v)},
           series:[{name:'Count', data:series}] };
         if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
       } else if(view==='donut'){
         const sum = series.reduce((a,b)=>a+b,0);
-        const opts = { ...base, chart:{...base.chart, type:'donut'}, grid:{borderColor:LINE, strokeDashArray:4},
+        const opts = { ...base, chart:{...base.chart, type:'donut'},
           series: (sum>0?series:[1]), labels: (sum>0?labels:['No data']), colors: (sum>0?colors:['#2b2f36']), stroke:{show:true, width:0},
           dataLabels:{enabled: sum>0, formatter:(v)=>`${Math.round(v)}%`},
           plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0? 'Total':'No data', formatter:(w)=> sum>0? fmtInt(sum) : '' } } } } },
           legend:{position:'right', labels:{colors:'#c9ced8'}} };
         if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
       } else { // line
-        const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'},
-          grid:{borderColor:LINE, strokeDashArray:4},
-          stroke:{curve:'smooth', width:3}, markers:{size:3},
+        const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'}, stroke:{curve:'smooth', width:3}, markers:{size:3},
           xaxis:{categories:labels, title:{text:'Status', style:{color:'#c9ced8'}}},
           yaxis:{ labels:{ formatter:(v)=>fmt2(v) }, title:{text:'Count', style:{color:'#c9ced8'}} },
           series:[{name:'Count', data:series}] };
@@ -519,45 +603,17 @@
     }
   }
 
-  // ===== Loader control (slow bar + fast finish) =====
-  let progRAF = null, progStart = null, progHold = 0;
-  function startProgress(){
-    const bar = $('#progress-bar');
-    progStart = performance.now();
-    progHold = 0;
-    cancelAnimationFrame(progRAF);
-    const targetSlow = 85; // creep to ~85% in ~30s
-    const duration = 30000;
-
-    const step = (t)=>{
-      const elapsed = Math.max(0, t - progStart);
-      const p = Math.min(targetSlow, (elapsed/duration)*targetSlow);
-      progHold = p;
-      bar.style.width = p.toFixed(2)+'%';
-      progRAF = requestAnimationFrame(step);
-    };
-    progRAF = requestAnimationFrame(step);
-  }
-  function finishProgress(){
-    cancelAnimationFrame(progRAF);
-    $('#progress-bar').style.width = '100%';
-    // small delay so 100% is visible
-    setTimeout(()=>{ document.body.classList.remove('loading'); $('#progress-bar').style.width='0%'; }, 450);
-  }
-  const showLoader = (flag)=>{ document.body.classList.toggle('loading', !!flag); if(flag) startProgress(); };
-
-  // ===== infra =====
+  /* ===== infra ===== */
   function wire(){
-    $('#range-select').addEventListener('change', e=>{ state.range=e.target.value; setRangeAccent(); renderKeys(); refreshAll(); });
-    $('#agent-select').addEventListener('change', e=>{ state.agent=e.target.value; setAgentPill(); renderKeys(); refreshAll(); });
+    $('#range-select').addEventListener('change', e=>{ state.range=e.target.value; setRangeAccent(); renderKeys(); state.pipeInclude.__init=false; refreshAll(); });
+    $('#agent-select').addEventListener('change', e=>{ state.agent=e.target.value; setAgentPill(); renderKeys(); state.pipeInclude.__init=false; refreshAll(); });
 
-    // top chart controls
     $('#metric-select-top').addEventListener('change', e=>{ state.metric=e.target.value; setMetricAccent(); refreshChartsOnly(); });
     $('#chart-select-top').addEventListener('change', e=>{ state.chart=e.target.value; renderMainChart(); sendHeight(); });
 
     $('#pipe-view').addEventListener('change', e=>{ state.pipeView=e.target.value; renderPipeline(); sendHeight(); });
 
-    $('#show-all').addEventListener('click', ()=>{ state.agent='All'; $('#agent-select').value='All'; setAgentPill(); renderKeys(); refreshAll(); });
+    $('#show-all').addEventListener('click', ()=>{ state.agent='All'; $('#agent-select').value='All'; setAgentPill(); renderKeys(); state.pipeInclude.__init=false; refreshAll(); });
     $('#refresh-btn').addEventListener('click', ()=> window.location.reload());
 
     window.addEventListener('resize', ()=> sendHeight());
@@ -582,13 +638,18 @@
     try{
       showLoader(true);
       DATA = (typeof payload==='string')? JSON.parse(payload||'{}') : (payload||{});
-      state.range = state.range || '24h'; state.chart = state.chart || 'funnel'; state.metric = state.metric || 'Reply %'; state.agent = state.agent || 'All';
+      state.range = '24h'; state.chart = 'funnel'; state.metric = state.metric || 'Reply %'; state.agent = 'All';
+      state.pipeInclude = new Set(); state.pipeInclude.__init=false;
       populateSelectors(); refreshAll();
     }catch(err){ console.error('renderDashboard failed', err); }
-    finally{ finishProgress(); } // fast-finish once data lands
+    finally{ finishLoader(); }
   };
 
-  document.addEventListener('DOMContentLoaded', ()=>{ showLoader(true); populateSelectors(); wire(); sendHeight(); });
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // kick the loader’s slow bar even before data arrives
+    showLoader(true);
+    populateSelectors(); wire(); sendHeight();
+  });
 })();
 </script>
 </body>
