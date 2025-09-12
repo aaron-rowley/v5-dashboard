@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agent Performance Dashboard (GHL v1.3)</title>
+  <title>Agent Performance Dashboard (GHL v1.4)</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <style>
@@ -11,15 +11,14 @@
       --bg-main:#0f1115; --bg-panel:#17191e; --bg-panel-2:#21242b; --bg-element:#101215;
       --line:#2b2f36; --text:#ffffff; --muted:#c9ced8; --primary:#ed6c03; --primary-dark:#b94f00;
       --radius:12px; --font:'Outfit',sans-serif; --shadow:0 8px 32px rgba(0,0,0,.25);
-      --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --violet:#8b5cf6; --blue:#3b82f6; --teal:#14b8a6;
     }
     *{box-sizing:border-box}
     html,body{background:var(--bg-main); color:var(--text); margin:0; font-family:var(--font); height:auto; overflow:visible}
 
     /* Spinner-first */
-    body.loading .wrap{ display:none; }
-    body.loading #loader{ display:grid; }
-    #loader{position:fixed; inset:0; display:none; place-items:center; background:rgba(15,17,21,.85); z-index:9999; backdrop-filter:saturate(120%) blur(2px)}
+    body.loading .wrap{display:none;}
+    body.loading #loader{display:grid;}
+    #loader{position:fixed; inset:0; display:none; place-items:center; background:rgba(15,17,21,.85); z-index:9999; backdrop-filter:saturate(115%) blur(2px)}
     .spinner{width:88px; height:88px; border-radius:50%; background:radial-gradient(closest-side,rgba(237,108,3,.18),rgba(237,108,3,.04) 55%,transparent 60%);
       position:relative; box-shadow:0 0 60px rgba(237,108,3,.25)}
     .spinner:after{content:""; position:absolute; inset:10px; border-radius:50%; border:6px solid transparent; border-top-color:var(--primary);
@@ -31,17 +30,24 @@
     .section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
     .section-title h1{margin:0; font-size:20px; font-weight:800}
     .hint{color:var(--muted); font-size:.92rem}
-    .pill{display:inline-flex; gap:8px; align-items:center; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); border-radius:999px; padding:8px 12px; font-weight:700}
+    .pill{display:inline-flex; gap:8px; align-items:center; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+      border-radius:999px; padding:8px 12px; font-weight:700}
     .btn{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer}
     .btn:hover{background:var(--primary); border-color:var(--primary-dark)}
     .divider{height:1px; background:var(--line); margin:12px 0 18px}
 
     .controls{display:grid; grid-template-columns:repeat(12,1fr); gap:12px; align-items:center;
-      background:var(--bg-panel); border-radius:var(--radius); padding:12px; margin:8px 0 16px}
+      background:var(--bg-panel); border-radius:var(--radius); padding:12px; margin:8px 0 10px}
     .ctrl{grid-column:span 3; display:flex; flex-direction:column; gap:6px; min-width:0}
     .ctrl.small{grid-column:span 2}
     .label{color:var(--muted); font-size:.75rem; letter-spacing:.02em}
     select{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 14px; font-weight:600; width:100%}
+
+    /* Color key row */
+    .keys{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 16px}
+    .key-pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--bg-panel);
+      font-weight:700}
+    .dot{width:10px; height:10px; border-radius:50%}
 
     .grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:8px 0 16px}
     .kpi{background:var(--bg-panel); border-radius:var(--radius); padding:18px; transition:box-shadow .25s, outline .25s}
@@ -49,12 +55,12 @@
     .kpi .big{font-size:34px; font-weight:800; letter-spacing:.5px}
     .kpi .pillline{margin-top:8px; color:var(--muted)}
     .kpi .pillline strong{color:var(--primary)}
-    .kpi.glow{ box-shadow:0 0 0 2px var(--primary), 0 0 24px rgba(237,108,3,.35); }
+    .kpi.glow{box-shadow:0 0 0 2px var(--primary), 0 0 24px rgba(237,108,3,.35)}
 
     .card{background:var(--bg-panel); border-radius:var(--radius); padding:14px}
     .section{background:var(--bg-panel); border-radius:var(--radius); padding:14px; margin-top:14px}
 
-    /* Chart titles/subtitles to make the graphs idiot-proof */
+    /* Chart titles/subtitles */
     .chart-header{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px}
     .chart-title{font-weight:800; letter-spacing:.2px}
     .chart-sub{color:var(--muted); font-size:.92rem}
@@ -62,11 +68,9 @@
     /* Pipeline table */
     .pipe-row{display:grid; grid-template-columns:1.5fr .6fr 3fr; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line)}
     .pipe-row:last-child{border-bottom:none}
-    .dot{width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px}
     .bar{height:8px; background:var(--bg-panel-2); border-radius:999px; overflow:hidden}
     .bar>span{display:block; height:100%; border-radius:999px}
 
-    /* responsive */
     @media (max-width:980px){
       .grid-kpi{grid-template-columns:1fr 1fr}
       .ctrl{grid-column:span 6}
@@ -90,7 +94,8 @@
     </div>
     <div style="display:flex; gap:10px; align-items:center">
       <div class="pill" id="agent-pill">Agent: <strong id="agent-pill-name">All</strong></div>
-      <div class="pill" id="metric-pill" style="border-color:var(--line);">Metric: <strong id="metric-pill-name">Reply %</strong></div>
+      <div class="pill" id="metric-pill">Metric: <strong id="metric-pill-name">Reply %</strong></div>
+      <div class="pill" id="range-pill">Range: <strong id="range-pill-name">Last 24 Hours</strong></div>
       <button class="btn" id="refresh-btn">Refresh metrics</button>
     </div>
   </div>
@@ -131,6 +136,9 @@
     </div>
   </div>
 
+  <!-- Color keys (agents + range) -->
+  <div class="keys" id="keys-row"></div>
+
   <div class="grid-kpi">
     <div class="kpi" id="kpi-contacted-card"><h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div></div>
     <div class="kpi" id="kpi-replies-card"><h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="pillline">Reply %: <strong id="kpi-replyPct">0%</strong></div></div>
@@ -170,21 +178,22 @@
 
 <script>
 (function(){
-  // helpers
+  // ===== helpers =====
   const $ = s => document.querySelector(s);
   const fmtInt = n => new Intl.NumberFormat().format(Math.round(Number(n)||0));
   const fmt2 = n => { const v = Number(n)||0; return Math.abs(v - Math.round(v)) < 0.005 ? fmtInt(v) : v.toFixed(2); };
   const safeDiv = (a,b) => (b>0 ? (Number(a)||0)/(Number(b)||0) : 0);
   const pct = (num, den) => 100*safeDiv(num, den);
-  const nicePct = v => `${Math.round(Number(v)||0)}%`; // whole-number percents
+  const nicePct = v => `${Math.round(Number(v)||0)}%`;
   const LINE = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
+  const rangeLabel = r => ({'24h':'Last 24 Hours','7d':'Last 7 Days','30d':'Last 30 Days','90d':'Last 90 Days'})[r]||r;
+  const chartLabel = c => ({'funnel':'Funnel','bar':'Bar (vertical)','bar-h':'Bar (horizontal)','donut':'Donut','line':'Line'})[c]||c;
 
-  const COLORS = {
-    New:'#ED6C03', Lost:'#EF4444', Sold:'#22C55E', 'Needs Follow Up':'#F59E0B',
-    Pipeline:'#8B5CF6', 'sold b/ai':'#3B82F6', Unchecked:'#60a5fa', Service:'#10b981',
-    default:'#6B7280'
-  };
+  // stable agent palette via hash → index
+  const PALETTE = ['#ed6c03','#22c55e','#8b5cf6','#3b82f6','#14b8a6','#ef4444','#eab308','#a855f7'];
+  const agentColor = name => { if(!name) return '#6B7280'; let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length]; };
 
+  const RANGE_COLORS = {'24h':'#ed6c03','7d':'#14b8a6','30d':'#3b82f6','90d':'#8b5cf6'};
   const METRIC_ACCENTS = {
     'Reply %':'#ed6c03',
     'Contacted → Appt/Lead %':'#8b5cf6',
@@ -195,7 +204,7 @@
     'Sold':'#22c55e'
   };
 
-  let DATA = {}; // payload
+  let DATA = {};
   let mainChart = null, pipeChart = null;
   const state = { range:'24h', metric:'Reply %', agent:'All', chart:'funnel', pipeView:'table' };
 
@@ -225,14 +234,15 @@
     'Appt/Lead → Close %': pct(o.Sold, o['Appointments / Leads'])
   });
 
+  // ===== UI color accents =====
   function setMetricAccent(){
-    const color = METRIC_ACCENTS[state.metric] || 'var(--primary)';
-    const pill = $('#metric-pill');
+    const color = METRIC_ACCENTS[state.metric] || '#ed6c03';
+    const metricPill = $('#metric-pill');
     $('#metric-pill-name').textContent = state.metric;
-    pill.style.borderColor = color;
-    pill.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 22px ${hexToRgba(color, .35)}`;
+    metricPill.style.borderColor = color;
+    metricPill.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 18px ${hexToRgba(color,.35)}`;
 
-    // glow KPI cards (single metric or pairs for conversions)
+    // KPI glow rules
     ['kpi-contacted-card','kpi-replies-card','kpi-leads-card','kpi-sold-card'].forEach(id=>$('#'+id).classList.remove('glow'));
     if(state.metric==='Contacted') $('#kpi-contacted-card').classList.add('glow');
     if(state.metric==='Replies' || state.metric==='Reply %') { $('#kpi-replies-card').classList.add('glow'); if(state.metric==='Reply %') $('#kpi-contacted-card').classList.add('glow'); }
@@ -240,21 +250,40 @@
     if(state.metric==='Contacted → Appt/Lead %') { $('#kpi-contacted-card').classList.add('glow'); $('#kpi-leads-card').classList.add('glow'); }
     if(state.metric==='Appt/Lead → Close %') { $('#kpi-leads-card').classList.add('glow'); $('#kpi-sold-card').classList.add('glow'); }
     if(state.metric==='Sold') $('#kpi-sold-card').classList.add('glow');
+  }
+  function setRangeAccent(){
+    const color = RANGE_COLORS[state.range] || '#6B7280';
+    const pill = $('#range-pill');
+    $('#range-pill-name').textContent = rangeLabel(state.range);
+    pill.style.borderColor = color;
+    pill.style.boxShadow = `0 0 0 2px ${color} inset`;
+  }
+  function setAgentPill(){
+    $('#agent-pill-name').textContent = state.agent;
+    const pill = $('#agent-pill');
+    pill.style.borderColor = state.agent==='All' ? 'var(--line)' : agentColor(state.agent);
+    pill.style.boxShadow = state.agent==='All' ? 'none' : `0 0 0 2px ${agentColor(state.agent)} inset`;
+  }
+  function hexToRgba(hex,a){ const v=hex.replace('#',''); const r=parseInt(v.slice(0,2),16), g=parseInt(v.slice(2,4),16), b=parseInt(v.slice(4,6),16); return `rgba(${r},${g},${b},${a||1})`; }
 
-    // agent pill highlight when specific agent selected
-    const agentPill = $('#agent-pill');
-    if(state.agent!== 'All') agentPill.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 14px ${hexToRgba(color,.35)}`; else agentPill.style.boxShadow='none';
+  // Keys row
+  function renderKeys(){
+    const el = $('#keys-row');
+    const items = [];
+    // Agent key (only if All)
+    if(state.agent==='All'){
+      for(const a of getAgents()){
+        items.push(`<span class="key-pill"><span class="dot" style="background:${agentColor(a.name)}"></span>${a.name}</span>`);
+      }
+    } else {
+      items.push(`<span class="key-pill"><span class="dot" style="background:${agentColor(state.agent)}"></span>${state.agent}</span>`);
+    }
+    // Range key
+    items.push(`<span class="key-pill"><span class="dot" style="background:${RANGE_COLORS[state.range]||'#6B7280'}"></span>${rangeLabel(state.range)}</span>`);
+    el.innerHTML = items.join('');
   }
 
-  function hexToRgba(hex, a){
-    if(hex.startsWith('var')) return `rgba(237,108,3,${a||1})`;
-    const v = hex.replace('#','');
-    const r = parseInt(v.substring(0,2),16);
-    const g = parseInt(v.substring(2,4),16);
-    const b = parseInt(v.substring(4,6),16);
-    return `rgba(${r},${g},${b},${a||1})`;
-  }
-
+  // ===== Populate & KPIs =====
   function populateSelectors(){
     $('#metric-select').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
     $('#metric-select').value = state.metric;
@@ -264,8 +293,8 @@
     $('#range-select').value = state.range;
     $('#chart-select').value = state.chart;
     $('#pipe-view').value = state.pipeView;
-    $('#agent-pill-name').textContent = state.agent;
-    setMetricAccent();
+
+    setMetricAccent(); setRangeAccent(); setAgentPill(); renderKeys();
   }
 
   function renderHeaderKPIs(){
@@ -295,9 +324,8 @@
     const sub = `Distribution of contact statuses · ${state.agent==='All'? 'All agents' : state.agent}`;
     $('#pipe-sub').textContent = sub;
   }
-  function rangeLabel(r){ return ({'24h':'Last 24 Hours','7d':'Last 7 Days','30d':'Last 30 Days','90d':'Last 90 Days'})[r]||r; }
-  function chartLabel(c){ return ({'funnel':'Funnel','bar':'Bar (vertical)','bar-h':'Bar (horizontal)','donut':'Donut','line':'Line'})[c]||c; }
 
+  // ===== Charts =====
   function renderMainChart(){
     describeMain();
     const agents = getAgents().map(addDerived);
@@ -314,8 +342,7 @@
     }
 
     const isPct = !!selectedMetric?.pct;
-    const yFmt = (v)=> isPct ? `${Math.round(Number(v)||0)}%` : fmt2(v);
-    const accent = METRIC_ACCENTS[state.metric] || '#ed6c03';
+    const accent = state.agent==='All' ? (METRIC_ACCENTS[state.metric]||'#ed6c03') : agentColor(state.agent);
     const usableType = (state.chart==='line' && (dataVals.filter(v=>v>0).length<2 || cats.length<2)) ? 'funnel' : state.chart;
 
     const baseOpts = {
@@ -323,7 +350,7 @@
       grid:{borderColor:LINE, strokeDashArray:4}, dataLabels:{enabled:false},
       tooltip:{theme:'dark', y:{formatter:(val)=> isPct ? `${Math.round(Number(val)||0)}%` : fmt2(val)}}, legend:{labels:{colors:'#c9ced8'}},
       xaxis:{ labels:{ style:{colors:'#c9ced8'}, rotate:0, trim:true } },
-      yaxis:{ labels:{ style:{colors:'#c9ced8'} } }
+      yaxis:{ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) } }
     };
 
     let opts = {...baseOpts};
@@ -340,48 +367,42 @@
       opts.chart.type='bar';
       opts.plotOptions={bar:{horizontal:true, borderRadius:6, barHeight:'40%'}};
       opts.series=[{name:state.metric, data:seriesData}];
-      opts.xaxis={...opts.xaxis, labels:{...opts.xaxis.labels, formatter:(v)=>fmt2(v)}};
     } else if(usableType==='donut'){
-      // pretty donuts + zero-data mode
       const sum = dataVals.reduce((a,b)=>a+(Number(b)||0),0);
       let series = dataVals.map(v=>Math.max(0, Number(v)||0));
       let labels = cats.length?cats:[state.metric];
-      let colors = series.map(()=>accent);
+      let colors = (state.agent==='All') ? cats.map(n=>agentColor(n)) : series.map(()=>accent);
       if(sum<=0){ series=[1]; labels=['No data']; colors=['#2b2f36']; }
 
       opts = {
         ...baseOpts,
         chart:{...baseOpts.chart, type:'donut'},
-        series, labels,
-        colors,
+        series, labels, colors,
         stroke:{show:true, width:0},
-        dataLabels:{enabled:true, formatter:(val)=> `${Math.round(val)}%`, style:{fontSize:'12px', fontWeight:700}},
+        dataLabels:{enabled: sum>0, formatter:(val)=> `${Math.round(val)}%`, style:{fontSize:'12px', fontWeight:700}},
         legend:{position:'right', labels:{colors:'#c9ced8'}},
-        fill:{ type:'gradient', gradient:{ shade:'dark', type:'vertical', shadeIntensity:0.5, gradientToColors:series.map(()=>lighten(accent, .15)), opacityFrom:0.95, opacityTo:0.85, stops:[0,50,100] } },
-        plotOptions:{
-          pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0?'Total':'No data', formatter:(w)=> sum>0? fmtInt(series.reduce((a,b)=>a+b,0)) : '' } } } }
-        }
+        fill:{ type:'gradient', gradient:{ shade:'dark', type:'vertical', shadeIntensity:0.5, gradientToColors:colors.map(c=>lighten(c,.15)), opacityFrom:0.95, opacityTo:0.85, stops:[0,50,100]} },
+        plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0?'Total':'No data', formatter:(w)=> sum>0? fmtInt(series.reduce((a,b)=>a+b,0)) : '' } } } } }
       };
     } else if(usableType==='bar-h'){
-      // highlight the selected agent bar when viewing ALL agents
       const distributed = (state.agent==='All');
-      const colors = distributed ? cats.map(n=> n===state.agent? accent : accent) : [accent];
-      opts.colors = distributed ? cats.map(()=>accent) : [accent];
+      const colors = distributed ? cats.map(n=>agentColor(n)) : [accent];
+      opts.colors = colors;
       opts.chart.type='bar'; opts.plotOptions={bar:{horizontal:true, borderRadius:6, distributed}};
-      opts.xaxis={...opts.xaxis, categories:cats, labels:{...opts.xaxis.labels, formatter:(v)=>fmt2(v)}};
+      opts.xaxis={...opts.xaxis, categories:cats};
       opts.series=[{name:state.metric, data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     } else if(usableType==='bar'){
       const distributed = (state.agent==='All');
-      opts.colors = distributed ? cats.map(()=>accent) : [accent];
+      const colors = distributed ? cats.map(n=>agentColor(n)) : [accent];
+      opts.colors = colors;
       opts.chart.type='bar'; opts.plotOptions={bar:{horizontal:false, borderRadius:6, columnWidth:'55%', distributed}};
       opts.xaxis={...opts.xaxis, categories:cats};
-      opts.yaxis={ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) } };
       opts.series=[{name:state.metric, data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     } else { // line
-      opts.colors=[accent];
+      const color = accent;
+      opts.colors=[color];
       opts.chart.type='line'; opts.stroke={curve:'smooth', width:3}; opts.markers={size:3};
       opts.xaxis={...opts.xaxis, categories:cats};
-      opts.yaxis={ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) } };
       opts.series=[{name:(state.agent==='All'?state.metric:state.agent), data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     }
 
@@ -418,7 +439,7 @@
       const html = rows.map(r=>{
         const count = Number(r.Count)||0;
         const p = pct(count, total);
-        const color = COLORS[r.Status] || COLORS.default;
+        const color = agentColor(r.Status) || '#6B7280'; // reuse palette for consistency
         return `<div class="pipe-row">
           <div><span class="dot" style="background:${color}"></span>${r.Status}</div>
           <div style="text-align:right">${fmtInt(count)} (${Math.round(p)}%)</div>
@@ -429,32 +450,35 @@
     } else {
       const series = rows.map(r=>Math.max(0,(Number(r.Count)||0)));
       const labels = rows.map(r=>r.Status);
-      const colors = rows.map(r=>COLORS[r.Status]||COLORS.default);
+      const colors = labels.map(l=>agentColor(l));
+      const h = Math.min(520, 140 + labels.length*26); // snap container height to content
+
       const base = { chart:{toolbar:{show:false}, parentHeightOffset:0, foreColor:'#c9ced8', dropShadow:{enabled:true, blur:2, opacity:.18}}, labels, colors, tooltip:{theme:'dark'}, legend:{labels:{colors:'#c9ced8'}} };
 
       if(view==='bars'){
-        const opts = { ...base, chart:{...base.chart, type:'bar'}, plotOptions:{bar:{horizontal:true, borderRadius:6}}, xaxis:{categories:labels, labels:{style:{colors:'#c9ced8'}}}, series:[{name:'Count', data:series}] };
-        if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:360}}); pipeChart.render();
+        const opts = { ...base, chart:{...base.chart, type:'bar'}, plotOptions:{bar:{horizontal:true, borderRadius:6}}, xaxis:{categories:labels}, series:[{name:'Count', data:series}] };
+        if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
       } else if(view==='donut'){
         const sum = series.reduce((a,b)=>a+b,0);
         const opts = { ...base, chart:{...base.chart, type:'donut'}, series: (sum>0?series:[1]), labels: (sum>0?labels:['No data']), colors: (sum>0?colors:['#2b2f36']), stroke:{show:true, width:0}, dataLabels:{enabled: sum>0, formatter:(v)=>`${Math.round(v)}%`}, plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0? 'Total':'No data', formatter:(w)=> sum>0? fmtInt(sum) : '' } } } } }, legend:{position:'right', labels:{colors:'#c9ced8'}} };
-        if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:360}}); pipeChart.render();
+        if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
       } else { // line
-        const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'}, stroke:{curve:'smooth', width:3}, markers:{size:3}, xaxis:{categories:labels, labels:{style:{colors:'#c9ced8'}}}, yaxis:{ labels:{ formatter:(v)=>fmt2(v) } }, series:[{name:'Count', data:series}] };
-        if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:360}}); pipeChart.render();
+        const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'}, stroke:{curve:'smooth', width:3}, markers:{size:3}, xaxis:{categories:labels}, yaxis:{ labels:{ formatter:(v)=>fmt2(v) } }, series:[{name:'Count', data:series}] };
+        if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
       }
     }
   }
 
+  // ===== infra =====
   const showLoader = (flag)=>{ document.body.classList.toggle('loading', !!flag); };
 
   function wire(){
-    $('#range-select').addEventListener('change', e=>{ state.range=e.target.value; refreshAll(); });
+    $('#range-select').addEventListener('change', e=>{ state.range=e.target.value; setRangeAccent(); renderKeys(); refreshAll(); });
     $('#metric-select').addEventListener('change', e=>{ state.metric=e.target.value; setMetricAccent(); refreshChartsOnly(); });
-    $('#agent-select').addEventListener('change', e=>{ state.agent=e.target.value; $('#agent-pill-name').textContent = state.agent; populateSelectors(); refreshAll(); });
+    $('#agent-select').addEventListener('change', e=>{ state.agent=e.target.value; setAgentPill(); renderKeys(); refreshAll(); });
     $('#chart-select').addEventListener('change', e=>{ state.chart=e.target.value; renderMainChart(); sendHeight(); });
     $('#pipe-view').addEventListener('change', e=>{ state.pipeView=e.target.value; renderPipeline(); sendHeight(); });
-    $('#show-all').addEventListener('click', ()=>{ state.agent='All'; $('#agent-select').value='All'; $('#agent-pill-name').textContent='All'; populateSelectors(); refreshAll(); });
+    $('#show-all').addEventListener('click', ()=>{ state.agent='All'; $('#agent-select').value='All'; setAgentPill(); renderKeys(); refreshAll(); });
     $('#refresh-btn').addEventListener('click', ()=> window.location.reload());
     window.addEventListener('resize', ()=> sendHeight());
     window.addEventListener('message', (e)=>{ const m=e?.data; if(!m) return; if(m.type==='VQ_METRICS'){ renderDashboard(m.payload); } if(m.type==='VQ_REQUEST_HEIGHT'){ sendHeight(); }});
@@ -473,6 +497,7 @@
   function sendHeight(){ setTimeout(()=>{ parent.postMessage({type:'VQ_IFR_HEIGHT', height: computedHeight() }, '*'); }, 0); }
   const ro = new ResizeObserver(()=> sendHeight()); ro.observe(document.documentElement);
 
+  // public entry
   window.renderDashboard = function(payload){
     try{
       showLoader(true);
