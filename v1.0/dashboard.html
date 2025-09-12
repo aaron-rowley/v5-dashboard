@@ -367,14 +367,27 @@
     $('#show-all').addEventListener('click', ()=>{ state.agent='All'; $('#agent-select').value='All'; $('#agent-pill-name').textContent='All'; refreshAll(); });
     $('#refresh-btn').addEventListener('click', ()=> window.location.reload());
     window.addEventListener('resize', ()=> sendHeight());
-    window.addEventListener('message', (e)=>{ const m=e?.data; if(m&&m.type==='VQ_METRICS'){ renderDashboard(m.payload); }});
+    window.addEventListener('message', (e)=>{ const m=e?.data; if(m&&m.type==='VQ_METRICS'){ renderDashboard(m.payload); } if(m&&m.type==='VQ_REQUEST_HEIGHT'){ sendHeight(); }});
   }
 
   function refreshAll(){ renderHeaderKPIs(); renderMainChart(); renderPipeline(); sendHeight(); }
   function refreshChartsOnly(){ renderMainChart(); renderPipeline(); sendHeight(); }
 
-  // tell the parent (GHL/iframe) our height so it can resize
-  function sendHeight(){ setTimeout(()=>{ parent.postMessage({type:'VQ_IFR_HEIGHT', height: document.body.scrollHeight }, '*'); }, 0); }
+  // —— Auto-height to parent (GHL iframe) ——
+  function computedHeight(){
+    return Math.max(
+      document.body.scrollHeight, document.documentElement.scrollHeight,
+      document.body.offsetHeight, document.documentElement.offsetHeight,
+      document.body.clientHeight, document.documentElement.clientHeight
+    );
+  }
+  function sendHeight(){
+    // slight delay lets charts/layout settle
+    setTimeout(()=>{ parent.postMessage({type:'VQ_IFR_HEIGHT', height: computedHeight() }, '*'); }, 0);
+  }
+  // Continuously observe size changes (chart renders, filters, font loads, etc.)
+  const ro = new ResizeObserver(()=> sendHeight());
+  ro.observe(document.documentElement);
 
   // public entry
   window.renderDashboard = function(payload){
