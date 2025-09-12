@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agent Performance Dashboard (GHL v1.6)</title>
+  <title>Agent Performance Dashboard (GHL v1.6.1)</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <style>
@@ -19,13 +19,17 @@
     body.loading .wrap{display:none;}
     body.loading #loader{display:grid;}
     #loader{
-      position:fixed; inset:0; display:none; place-items:center; z-index:9999;
+      position:fixed; inset:0; display:none;
+      place-items:center;               /* center each item */
+      place-content:center;             /* center the whole stack (fixes spacing) */
+      gap:12px;                         /* consistent spacing between items */
+      z-index:9999;
       background:rgba(15,17,21,.92); backdrop-filter:saturate(115%) blur(1.5px)
     }
     .spinner{
       width:88px; height:88px; border-radius:50%;
       background:radial-gradient(closest-side,rgba(237,108,3,.18),rgba(237,108,3,.06) 55%,transparent 60%);
-      position:relative; box-shadow:0 0 60px rgba(237,108,3,.25); margin-bottom:18px
+      position:relative; box-shadow:0 0 60px rgba(237,108,3,.25)
     }
     .spinner:after{
       content:""; position:absolute; inset:10px; border-radius:50%;
@@ -37,7 +41,7 @@
     .loadbar>span{display:block; width:0%; height:100%; background:linear-gradient(90deg, rgba(237,108,3,.2), rgba(237,108,3,.9));
       box-shadow:0 0 14px rgba(237,108,3,.45); animation:slowfill 30s linear forwards}
     @keyframes slowfill{from{width:0%} to{width:100%}}
-    #loadtext{margin-top:12px; color:#d6dbe5; font-weight:700; letter-spacing:.2px}
+    #loadtext{color:#d6dbe5; font-weight:700; letter-spacing:.2px}
 
     /* ===== Layout & UI ===== */
     .wrap{width:100%; max-width:100%; margin:24px auto 80px; padding:0 16px}
@@ -106,6 +110,7 @@
     .chip .dot{width:8px; height:8px; border-radius:50%}
     .chip.active{box-shadow:0 0 0 2px rgba(237,108,3,.6) inset}
 
+    /* Mobile tweaks */
     @media (max-width:980px){
       .grid-kpi{grid-template-columns:1fr 1fr}
       .ctrl{grid-column:span 6}
@@ -116,6 +121,14 @@
       .grid-kpi{grid-template-columns:1fr}
       .ctrl{grid-column:span 12}
       .ctrl.small{grid-column:span 12}
+    }
+    @media (max-width:520px){
+      .chips{flex-wrap:nowrap; overflow-x:auto; gap:10px; padding-bottom:6px}
+      .chips::-webkit-scrollbar{display:none}
+      .chart-ctrls{gap:8px}
+      .section-title{gap:8px}
+      .pill{padding:6px 10px}
+      select{padding:9px 12px}
     }
   </style>
 </head>
@@ -146,7 +159,7 @@
     <div class="controls" id="controls">
       <div class="ctrl small">
         <div class="label">Range</div>
-        <select id="range-select">
+        <select id="range-select" aria-label="Select time range">
           <option value="24h">Last 24 Hours</option>
           <option value="7d">Last 7 Days</option>
           <option value="30d">Last 30 Days</option>
@@ -155,7 +168,7 @@
       </div>
       <div class="ctrl small">
         <div class="label">Agent</div>
-        <select id="agent-select"></select>
+        <select id="agent-select" aria-label="Select agent"></select>
       </div>
       <div class="ctrl small">
         <div class="label">Quick</div>
@@ -193,10 +206,10 @@
         <div class="chart-ctrls">
           <span class="info" data-tip="Pick the metric to compare (affects KPI glow + chart).">i</span>
           <div class="label">Metric</div>
-          <select id="metric-select-top"></select>
+          <select id="metric-select-top" aria-label="Select metric for top chart"></select>
           <span class="info" data-tip="Switch the visualization for the agent chart.">i</span>
           <div class="label">View as</div>
-          <select id="chart-select-top">
+          <select id="chart-select-top" aria-label="Select chart type">
             <option value="funnel">Funnel</option>
             <option value="bar">Bar (vertical)</option>
             <option value="bar-h">Bar (horizontal)</option>
@@ -221,7 +234,7 @@
         <div class="chart-ctrls">
           <span class="info" data-tip="Visualize how contacts are distributed across statuses.">i</span>
           <div class="label">View as</div>
-          <select id="pipe-view">
+          <select id="pipe-view" aria-label="Select pipeline chart type">
             <option value="table">Table</option>
             <option value="bars">Horizontal bars</option>
             <option value="donut">Donut</option>
@@ -303,10 +316,7 @@
     document.body.classList.toggle('loading', !!flag);
     if(flag){
       const f = $('#loadbar-fill');
-      f.style.animation = 'none'; // restart
-      // force reflow
-      void f.offsetWidth;
-      f.style.animation = '';
+      f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; // restart bar
     }
   }
   function finishLoader(){
@@ -449,7 +459,7 @@
       opts.colors=[accent];
       opts.chart.type='bar';
       opts.plotOptions={bar:{horizontal:true, borderRadius:6, barHeight:'40%', dataLabels:{position:'center'}}};
-      // NaN fix: labels on Y are categories, do NOT format as percent
+      // NaN fix: y is categorical
       opts.yaxis={ labels:{ style:{colors:'#c9ced8'} } };
       opts.dataLabels={enabled:true, style:{fontWeight:700}, formatter:(v,{dataPointIndex})=> fmt2(seriesData[dataPointIndex].y)};
       opts.series=[{name:state.metric, data:seriesData}];
@@ -492,8 +502,11 @@
       opts.xaxis={...opts.xaxis, categories:cats, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}};
       opts.series=[{name:state.metric, data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     } else { // line
+      const pointColors = cats.map(c=>agentColor(c)); // per-point colors
+      const discrete = cats.map((c,i)=>({ seriesIndex:0, dataPointIndex:i, fillColor:pointColors[i], strokeColor:'#101215', size:4 }));
       opts.colors=[accent];
-      opts.chart.type='line'; opts.stroke={curve:'smooth', width:3}; opts.markers={size:3};
+      opts.chart.type='line'; opts.stroke={curve:'smooth', width:3};
+      opts.markers={size:3, discrete};
       opts.xaxis={...opts.xaxis, categories:cats, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}};
       opts.series=[{name:(state.agent==='All'?state.metric:state.agent), data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
     }
@@ -538,7 +551,6 @@
         if(key==='__ALL__'){ state.pipeInclude = new Set(allStatuses); }
         else{
           if(state.pipeInclude.has(key)) state.pipeInclude.delete(key); else state.pipeInclude.add(key);
-          if(state.pipeInclude.size===allStatuses.length){ /* no-op */ }
         }
         renderPipeline();
       });
@@ -593,8 +605,9 @@
           plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0? 'Total':'No data', formatter:(w)=> sum>0? fmtInt(sum) : '' } } } } },
           legend:{position:'right', labels:{colors:'#c9ced8'}} };
         if(pipeChart) pipeChart.destroy(); pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
-      } else { // line
-        const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'}, stroke:{curve:'smooth', width:3}, markers:{size:3},
+      } else { // line (with colored markers per point)
+        const discrete = labels.map((l,i)=>({ seriesIndex:0, dataPointIndex:i, fillColor:agentColor(l), strokeColor:'#101215', size:4 }));
+        const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'}, stroke:{curve:'smooth', width:3}, markers:{size:3, discrete},
           xaxis:{categories:labels, title:{text:'Status', style:{color:'#c9ced8'}}},
           yaxis:{ labels:{ formatter:(v)=>fmt2(v) }, title:{text:'Count', style:{color:'#c9ced8'}} },
           series:[{name:'Count', data:series}] };
