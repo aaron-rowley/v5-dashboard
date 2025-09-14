@@ -70,6 +70,21 @@
     .wrap.reveal #chart-card{ animation:fadeUp .38s ease-out both .12s; }
     .wrap.reveal .section{ animation:fadeUp .40s ease-out both .18s; }
 
+    /* --- extra micro-interactions --- */
+    .kpi, .card, .section { transition: transform .25s ease, box-shadow .25s ease; }
+    .kpi:hover, .card:hover, .section:hover { transform: translateY(-2px); }
+
+    /* animate pipeline bars on value changes */
+    .bar > span { transition: width .5s cubic-bezier(.22,.61,.36,1); }
+
+    /* gentle "bump" when pills/chips change */
+    .pill.bump, .chip.flash { animation: bump .34s ease; }
+    @keyframes bump { 0% {transform:scale(1)} 50% {transform:scale(1.04)} 100% {transform:scale(1)} }
+
+    /* fade charts when swapping */
+    #main-chart, #pipeline-chart { transition: opacity .24s ease; }
+    #main-chart.fade, #pipeline-chart.fade { opacity: 0; }
+
     /* ===== Layout & UI ===== */
     .section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
     .section-title h1{margin:0; font-size:20px; font-weight:800}
@@ -269,6 +284,7 @@
     const rangeLabel = r => ({'24h':'Last 24 Hours','7d':'Last 7 Days','30d':'Last 30 Days','90d':'Last 90 Days'})[r]||r;
     const chartLabel = c => ({'funnel':'Funnel','bar':'Bar (vertical)','bar-h':'Bar (horizontal)','donut':'Donut','line':'Line'})[c]||c;
 
+    // stable agent palette
     const PALETTE = ['#ed6c03','#22c55e','#8b5cf6','#3b82f6','#14b8a6','#ef4444','#eab308','#a855f7'];
     const agentColor = name => {
       if(!name) return '#6B7280';
@@ -313,30 +329,38 @@
       'Appt/Lead → Close %': pct(o.Sold,o['Appointments / Leads'])
     });
 
+    /* ===== animations ===== */
+    const easeOut = t => t*(2-t);
+    function tweenNumber(el, to, { duration=700, formatter=fmtInt } = {}){
+      const from = Number(el.dataset.value ?? el.textContent.replace(/[^0-9.-]/g,'') || 0);
+      const start = performance.now();
+      const d = Math.max(200, duration);
+      function step(now){
+        const t = Math.min(1, (now - start)/d);
+        const v = from + (to - from) * easeOut(t);
+        el.textContent = formatter(v);
+        if(t<1) requestAnimationFrame(step); else el.dataset.value = String(to);
+      }
+      requestAnimationFrame(step);
+    }
+    function tweenPercent(el, to, opts={}){ tweenNumber(el, to, { ...opts, formatter:v=>`${Math.round(v)}%` }); }
+    function bump(el){ if(!el) return; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); setTimeout(()=>el.classList.remove('bump'), 420); }
+    function fadeChart(el, renderFn){ el.classList.add('fade'); requestAnimationFrame(()=>{ renderFn(); setTimeout(()=> el.classList.remove('fade'), 180); }); }
+
     /* ===== Loader helpers ===== */
     function showLoader(flag){
       document.body.classList.toggle('loading', !!flag);
-      if(flag){
-        const f = $('#loadbar-fill');
-        f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
-      }
+      if(flag){ const f = $('#loadbar-fill'); f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; }
     }
     function finishLoader(){
-      // fill bar
       const f = $('#loadbar-fill'); const loader = $('#loader'); const wrap = document.querySelector('.wrap');
       f.style.animation = 'none'; f.style.transition = 'width .35s ease-out'; f.style.width = '100%';
-
       setTimeout(()=>{
-        // reveal content with animation
         wrap.style.display = 'block';
         requestAnimationFrame(()=> wrap.classList.add('reveal'));
-
-        // slide/fade the loader out
         loader.style.transition = 'transform .35s ease, opacity .32s ease';
         loader.style.transform = 'translateY(-100%)';
         loader.style.opacity = '0';
-
-        // stop "loading" mode and cleanup
         document.body.classList.remove('loading');
         setTimeout(()=>{ loader.style.display='none'; f.style.transition=''; f.style.width='0%'; sendHeight(); }, 380);
       }, 220);
@@ -414,13 +438,14 @@
         : (getAgents().find(a=>a.name===state.agent) || {Contacted:0,Replies:0,'Appointments / Leads':0,Sold:0});
       const d = addDerived(base);
 
-      $('#kpi-contacted').textContent = fmtInt(base.Contacted);
-      $('#kpi-replies').textContent = fmtInt(base.Replies);
-      $('#kpi-leads').textContent = fmtInt(base['Appointments / Leads']);
-      $('#kpi-sold').textContent = fmtInt(base.Sold);
-      $('#kpi-replyPct').textContent = nicePct(d['Reply %']);
-      $('#kpi-r2l').textContent = nicePct(d['Replies → Appt/Lead %']);
-      $('#kpi-l2c').textContent = nicePct(d['Appt/Lead → Close %']);
+      tweenNumber($('#kpi-contacted'), base.Contacted);
+      tweenNumber($('#kpi-replies'),   base.Replies);
+      tweenNumber($('#kpi-leads'),     base['Appointments / Leads']);
+      tweenNumber($('#kpi-sold'),      base.Sold);
+
+      tweenPercent($('#kpi-replyPct'), d['Reply %']);
+      tweenPercent($('#kpi-r2l'),      d['Replies → Appt/Lead %']);
+      tweenPercent($('#kpi-l2c'),      d['Appt/Lead → Close %']);
     }
 
     function describeMain(){
@@ -535,9 +560,15 @@
         opts.series=[{name:(state.agent==='All'?state.metric:state.agent), data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
       }
 
-      if(mainChart) mainChart.destroy();
-      mainChart = new ApexCharts($('#main-chart'), {...opts, chart:{...opts.chart, height:460}});
-      mainChart.render();
+      const host = $('#main-chart');
+      fadeChart(host, () => {
+        if(mainChart) mainChart.destroy();
+        mainChart = new ApexCharts(host, {
+          ...opts,
+          chart:{...opts.chart, height:460, animations:{enabled:true, easing:'easeinout', speed:450, dynamicAnimation:{enabled:true, speed:300}}}
+        });
+        mainChart.render();
+      });
     }
 
     function lighten(hex, amt){
@@ -578,6 +609,7 @@
       container.querySelectorAll('.chip').forEach(ch=>{
         ch.addEventListener('click', ()=>{
           const key = ch.getAttribute('data-status');
+          ch.classList.add('flash'); setTimeout(()=> ch.classList.remove('flash'), 360);
           if(key==='__ALL__'){ state.pipeInclude = new Set(allStatuses); }
           else { if(state.pipeInclude.has(key)) state.pipeInclude.delete(key); else state.pipeInclude.add(key); }
           renderPipeline();
@@ -609,6 +641,10 @@
           </div>`;
         }).join('');
         $('#pipeline-table').innerHTML = html || '<div class="hint">No data.</div>';
+        // animate bars from 0 -> target width
+        document.querySelectorAll('#pipeline-table .bar>span').forEach(span=>{
+          const target = span.style.width; span.style.width = '0%'; requestAnimationFrame(()=> span.style.width = target);
+        });
       } else {
         const series = rows.map(r=>Math.max(0,(Number(r.Count)||0)));
         const labels = rows.map(r=>r.Status);
@@ -623,8 +659,10 @@
             yaxis:{ labels:{ style:{colors:'#c9ced8'} } },
             dataLabels:{enabled:true, style:{fontWeight:700}, formatter:(v)=>fmt2(v)},
             series:[{name:'Count', data:series}] };
-          if(pipeChart) pipeChart.destroy();
-          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+          fadeChart($('#pipeline-chart'), () => {
+            if(pipeChart) pipeChart.destroy();
+            pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+          });
         } else if(view==='donut'){
           const sum = series.reduce((a,b)=>a+b,0);
           const opts = { ...base, chart:{...base.chart, type:'donut'},
@@ -633,8 +671,10 @@
             dataLabels:{enabled: sum>0, formatter:(v)=> `${Math.round(v)}%`},
             plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0? 'Total':'No data', formatter:()=> sum>0? fmtInt(sum) : '' } } } } },
             legend:{position:'right', labels:{colors:'#c9ced8'}} };
-          if(pipeChart) pipeChart.destroy();
-          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+          fadeChart($('#pipeline-chart'), () => {
+            if(pipeChart) pipeChart.destroy();
+            pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+          });
         } else { // line
           const discrete = labels.map((l,i)=>({ seriesIndex:0, dataPointIndex:i, fillColor:agentColor(l), strokeColor:'#101215', size:4 }));
           const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'},
@@ -642,8 +682,10 @@
             xaxis:{categories:labels, title:{text:'Status', style:{color:'#c9ced8'}}},
             yaxis:{ labels:{ formatter:(v)=>fmt2(v) }, title:{text:'Count', style:{color:'#c9ced8'}}},
             series:[{name:'Count', data:series}] };
-          if(pipeChart) pipeChart.destroy();
-          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+          fadeChart($('#pipeline-chart'), () => {
+            if(pipeChart) pipeChart.destroy();
+            pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+          });
         }
       }
     }
@@ -651,13 +693,13 @@
     /* ===== infra ===== */
     function wire(){
       $('#range-select').addEventListener('change', e=>{
-        state.range=e.target.value; setRangeAccent(); renderKeys(); state.pipeInclude.__init=false; refreshAll();
+        state.range=e.target.value; setRangeAccent(); renderKeys(); bump($('#range-pill')); state.pipeInclude.__init=false; refreshAll();
       });
       $('#agent-select').addEventListener('change', e=>{
-        state.agent=e.target.value; setAgentPill(); renderKeys(); state.pipeInclude.__init=false; refreshAll();
+        state.agent=e.target.value; setAgentPill(); renderKeys(); bump($('#agent-pill')); state.pipeInclude.__init=false; refreshAll();
       });
       $('#metric-select-top').addEventListener('change', e=>{
-        state.metric=e.target.value; setMetricAccent(); refreshChartsOnly();
+        state.metric=e.target.value; setMetricAccent(); bump($('#metric-pill')); refreshChartsOnly();
       });
       $('#chart-select-top').addEventListener('change', e=>{
         state.chart=e.target.value; renderMainChart(); sendHeight();
