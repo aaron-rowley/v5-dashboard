@@ -15,10 +15,10 @@
   <script>
     (function () {
       const p = new URLSearchParams(location.search);
-      // Use ?height=… from GHL; otherwise use the visible viewport height
+      // Use ?height=… from GHL; otherwise the visible viewport height
       const H = Number(p.get('height')) || Math.floor(window.innerHeight);
 
-      // Inject loader with explicit height so *child* iframe doesn't scroll
+      // Inject loader with explicit height so child iframe never scrolls
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/gh/aaron-rowley/v5-dashboard@main/v1.0/loader.js';
       s.dataset.src      = 'https://aaron-rowley.github.io/v5-dashboard/v1.0/dashboard.html';
