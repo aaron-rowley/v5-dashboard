@@ -1,25 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VQ Dashboard Embed</title>
-  <style>html,body{margin:0;height:100%}</style>
+  <style>
+    html, body { height:100%; margin:0; overflow:hidden; }
+    #vq-dashboard-container { height:100%; }
+  </style>
 </head>
 <body>
   <div id="vq-dashboard-container"></div>
-
   <script>
-    (function () {
-      const p = new URLSearchParams(location.search);
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/gh/aaron-rowley/v5-dashboard@main/v1.0/loader.js';
-      s.dataset.src      = 'https://aaron-rowley.github.io/v5-dashboard/v1.0/dashboard.html';
-      s.dataset.location = p.get('location') || p.get('location_id') || '';
-      s.dataset.webhook  = p.get('webhook')  || '';
-      s.dataset.height   = p.get('height')   || '1200'; // fallback height
-      document.body.appendChild(s);
-    })();
+    const p = new URLSearchParams(location.search);
+    const H = Number(p.get('height') || 1200);
+
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/gh/aaron-rowley/v5-dashboard@main/v1.0/loader.js';
+    s.dataset.src      = 'https://aaron-rowley.github.io/v5-dashboard/v1.0/dashboard.html';
+    s.dataset.location = p.get('location') || p.get('location_id') || '';
+    s.dataset.webhook  = p.get('webhook') || '';
+    s.dataset.height   = String(H);
+    document.body.appendChild(s);
+
+    // ensure the loader’s iframe matches the container height
+    new MutationObserver(() => {
+      const f = document.querySelector('#vq-dashboard-container iframe');
+      if (f) { f.style.height = H + 'px'; f.style.border = 0; }
+    }).observe(document.body, { childList: true, subtree: true });
   </script>
 </body>
 </html>
