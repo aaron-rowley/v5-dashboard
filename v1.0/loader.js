@@ -6,20 +6,24 @@
   var containerId = 'vq-dashboard-container';
   var locationKey = (s.getAttribute('data-location') || '') + '|' + (s.getAttribute('data-webhook') || '');
   var initKey = containerId + '|' + locationKey;
+
   if (window.__VQ_INIT[initKey]) {
     // If we already initialized, reuse the existing iframe and just request height.
     var existingHost = document.getElementById(containerId);
     var existingIfr = existingHost && existingHost.querySelector('iframe');
     if (existingIfr && existingIfr.contentWindow) {
-      try { existingIfr.contentWindow.postMessage({ type: 'VQ_REQUEST_HEIGHT' }, '*'); } catch (e) {}
+      try {
+        existingIfr.contentWindow.postMessage({ type: 'VQ_REQUEST_HEIGHT' }, '*');
+      } catch (e) {}
     }
-    return; // <-- critical: no second webhook call
+    return; // <-- correctly scoped inside the if
   }
   window.__VQ_INIT[initKey] = true;
 
   // ---------- Host container (create if missing) ----------
   var host = document.getElementById(containerId) || (function () {
-    var d = document.createElement('div'); d.id = containerId;
+    var d = document.createElement('div'); 
+    d.id = containerId;
     s.parentNode.insertBefore(d, s);
     return d;
   })();
@@ -66,7 +70,9 @@
   // ---------- Auto-resize handshake/listener (parent side) ----------
   function requestHeightFor(frame) {
     if (frame && frame.contentWindow) {
-      try { frame.contentWindow.postMessage({ type: 'VQ_REQUEST_HEIGHT' }, '*'); } catch (e) {}
+      try {
+        frame.contentWindow.postMessage({ type: 'VQ_REQUEST_HEIGHT' }, '*');
+      } catch (e) {}
     }
   }
 
@@ -100,7 +106,7 @@
 
   // ---------- One-time load handler → fetch webhook once ----------
   ifr.addEventListener('load', function onLoad() {
-    ifr.removeEventListener('load', onLoad); // belt-and-suspenders + {once:true} alternative
+    ifr.removeEventListener('load', onLoad); // belt-and-suspenders
     if (AUTO_HEIGHT) startPinging();
 
     var body = { location: { id: LOCATION_ID } };
