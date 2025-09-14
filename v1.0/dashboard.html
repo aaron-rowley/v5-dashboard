@@ -373,7 +373,7 @@
 
     function hexToRgba(hex,a){
       const v=hex.replace('#','');
-      const r=parseInt(v.slice(0,2),16), g=parseInt(v.slice(2,4),16), b=parseInt(v.slice(4,6),16);
+      const r=parseInt(v.slice(0,2),16), g=parseInt(v.slice(2,4),16), b=parseInt(v.slice(4,2+4),16);
       return `rgba(${r},${g},${b},${a||1})`;
     }
 
@@ -709,7 +709,10 @@
       window.addEventListener('resize', ()=> sendHeight());
       window.addEventListener('message', (e)=>{
         const m=e?.data; if(!m) return;
-        if(m.type==='VQ_METRICS'){ renderDashboard(m.payload); }
+        if(m.type==='VQ_METRICS'){ 
+          gotParentPayload = true;           // <-- NEW: mark parent provided data
+          renderDashboard(m.payload); 
+        }
         if(m.type==='VQ_REQUEST_HEIGHT'){ sendHeight(); }
       });
     }
@@ -748,12 +751,39 @@
       }
     };
 
+    // ==== NEW: ONE-SHOT BOOTSTRAP in case parent doesn't send VQ_METRICS ====
+    const VQ_WEBHOOK_URL = 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
+    let bootstrapped = false;
+    let gotParentPayload = false;
+
+    async function bootstrapFetchOnce(){
+      if (bootstrapped || gotParentPayload) return;
+      bootstrapped = true;
+      showLoader(true);
+      try{
+        const res = await fetch(VQ_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ range: state.range }) // adapt if your API needs different params
+        });
+        const json = await res.json().catch(()=> ({}));
+        window.renderDashboard(json);
+      } catch(err){
+        console.error('Webhook fetch failed:', err);
+        finishLoader();
+      }
+    }
+    // ==== END NEW ====
+
     document.addEventListener('DOMContentLoaded', ()=>{
       // kick the loader’s slow bar even before data arrives
       showLoader(true);
       populateSelectors();
       wire();
       sendHeight();
+
+      // NEW: prefer parent data; if none within 600ms, hit webhook ONCE
+      setTimeout(()=> { if (!gotParentPayload) bootstrapFetchOnce(); }, 600);
     });
   })();
   </script>
