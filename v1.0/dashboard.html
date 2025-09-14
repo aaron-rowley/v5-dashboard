@@ -130,6 +130,23 @@
       .pill{padding:6px 10px}
       select{padding:9px 12px}
     }
+
+    /* --- Force loader to always center (override) --- */
+    #loader{
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      inset: auto !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+      z-index: 9999 !important;
+    }
   </style>
 </head>
 <body class="loading">
