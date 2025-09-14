@@ -15,10 +15,9 @@
     *{box-sizing:border-box}
     html,body{background:var(--bg-main); color:var(--text); margin:0; font-family:var(--font); height:auto; overflow:visible}
 
-    /* ===== Loader: now a top bar (not full overlay) ===== */
-    /* Keep content visible while loading */
-    body.loading .wrap{display:block;}
-    body.loading #loader{display:flex;}
+    /* ===== Top loader bar (only thing visible while loading) ===== */
+    body.loading .wrap{display:none;}         /* hide all content */
+    body.loading #loader{display:flex;}       /* show the bar */
 
     #loader{
       position:fixed; top:0; left:0; right:0; height:72px; display:none;
@@ -27,6 +26,7 @@
       border-bottom:1px solid var(--line);
       backdrop-filter:saturate(115%) blur(2px);
       padding:10px 16px;
+      transform:translateY(0); opacity:1; transition:none;
     }
     .spinner{
       width:28px; height:28px; border-radius:50%;
@@ -55,10 +55,22 @@
     @keyframes slowfill{from{width:0%} to{width:100%}}
     #loadtext{color:#d6dbe5; font-weight:700; letter-spacing:.2px; white-space:nowrap}
 
-    /* Add a little top spacing so content isn't hidden by the fixed loader bar */
+    /* top spacer so content isn't hidden by fixed bar */
     .wrap{width:100%; max-width:100%; margin:88px auto 80px; padding:0 16px}
 
-    /* ===== Layout & UI (unchanged below) ===== */
+    /* ===== Reveal animations when data arrives ===== */
+    @keyframes fadeUp { from {opacity:0; transform:translateY(8px)} to {opacity:1; transform:none} }
+    .wrap.reveal{ animation:fadeUp .32s ease-out both; }
+    .wrap.reveal .controls{ animation:fadeUp .34s ease-out both .06s; }
+    .wrap.reveal .grid-kpi .kpi{ opacity:0; animation:fadeUp .36s ease-out both; }
+    .wrap.reveal .grid-kpi .kpi:nth-child(1){ animation-delay:.08s }
+    .wrap.reveal .grid-kpi .kpi:nth-child(2){ animation-delay:.12s }
+    .wrap.reveal .grid-kpi .kpi:nth-child(3){ animation-delay:.16s }
+    .wrap.reveal .grid-kpi .kpi:nth-child(4){ animation-delay:.20s }
+    .wrap.reveal #chart-card{ animation:fadeUp .38s ease-out both .12s; }
+    .wrap.reveal .section{ animation:fadeUp .40s ease-out both .18s; }
+
+    /* ===== Layout & UI ===== */
     .section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
     .section-title h1{margin:0; font-size:20px; font-weight:800}
     .hint{color:var(--muted); font-size:.92rem}
@@ -141,7 +153,6 @@
   </div>
 
   <div class="wrap">
-    <!-- header / controls / charts (unchanged) -->
     <!-- ======= HEADER ======= -->
     <div class="section-title">
       <div>
@@ -311,11 +322,24 @@
       }
     }
     function finishLoader(){
-      const f = $('#loadbar-fill');
-      f.style.animation = 'none';
-      f.style.transition = 'width .35s ease-out';
-      f.style.width = '100%';
-      setTimeout(()=>{ showLoader(false); f.style.transition=''; f.style.width='0%'; }, 380);
+      // fill bar
+      const f = $('#loadbar-fill'); const loader = $('#loader'); const wrap = document.querySelector('.wrap');
+      f.style.animation = 'none'; f.style.transition = 'width .35s ease-out'; f.style.width = '100%';
+
+      setTimeout(()=>{
+        // reveal content with animation
+        wrap.style.display = 'block';
+        requestAnimationFrame(()=> wrap.classList.add('reveal'));
+
+        // slide/fade the loader out
+        loader.style.transition = 'transform .35s ease, opacity .32s ease';
+        loader.style.transform = 'translateY(-100%)';
+        loader.style.opacity = '0';
+
+        // stop "loading" mode and cleanup
+        document.body.classList.remove('loading');
+        setTimeout(()=>{ loader.style.display='none'; f.style.transition=''; f.style.width='0%'; sendHeight(); }, 380);
+      }, 220);
     }
 
     /* ===== UI accents ===== */
@@ -347,6 +371,12 @@
       const pill = $('#agent-pill');
       pill.style.borderColor = state.agent==='All' ? 'var(--line)' : agentColor(state.agent);
       pill.style.boxShadow = state.agent==='All' ? 'none' : `0 0 0 2px ${agentColor(state.agent)} inset`;
+    }
+
+    function hexToRgba(hex,a){
+      const v = hex.replace('#','');
+      const r = parseInt(v.slice(0,2),16), g = parseInt(v.slice(2,4),16), b = parseInt(v.slice(4,6),16);
+      return `rgba(${r},${g},${b},${a||1})`;
     }
 
     function renderKeys(){
@@ -671,8 +701,7 @@
         state.chart = 'funnel';
         state.metric = state.metric || 'Reply %';
         state.agent = 'All';
-        state.pipeInclude = new Set();
-        state.pipeInclude.__init=false;
+        state.pipeInclude = new Set(); state.pipeInclude.__init=false;
         populateSelectors();
         refreshAll();
       }catch(err){
