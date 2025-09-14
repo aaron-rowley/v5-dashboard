@@ -1,19 +1,46 @@
-<style>
-  html,body{height:100%;margin:0;overflow:hidden;}
-  #vq-dashboard-container{height:100%;}
-</style>
-<script>
-  const H = Number(new URLSearchParams(location.search).get('height')||2500);
-  const s = document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/gh/aaron-rowley/v5-dashboard@main/v1.0/loader.js';
-  s.dataset.src='https://aaron-rowley.github.io/v5-dashboard/v1.0/dashboard.html';
-  s.dataset.location='{{ injected by URL }}'; s.dataset.webhook='{{ injected by URL }}';
-  s.dataset.height=String(H);
-  document.body.appendChild(s);
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VQ Dashboard Embed</title>
+  <style>
+    html,body { height:100%; margin:0; overflow:hidden; }
+    #vq-dashboard-container { height:100%; }
+  </style>
+</head>
+<body>
+  <div id="vq-dashboard-container"></div>
 
-  // ensure the loader’s iframe fills the container
-  new MutationObserver(() => {
-    const f=document.querySelector('#vq-dashboard-container iframe');
-    if(f){ f.style.height=H+'px'; f.style.width='100%'; f.style.border='0'; f.setAttribute('scrolling','no'); }
-  }).observe(document.body,{childList:true,subtree:true});
-</script>
+  <script>
+    (function () {
+      const p = new URLSearchParams(location.search);
+      // Use ?height=… from GHL; otherwise use the visible viewport height
+      const H = Number(p.get('height')) || Math.floor(window.innerHeight);
+
+      // Inject loader with explicit height so *child* iframe doesn't scroll
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/gh/aaron-rowley/v5-dashboard@main/v1.0/loader.js';
+      s.dataset.src      = 'https://aaron-rowley.github.io/v5-dashboard/v1.0/dashboard.html';
+      s.dataset.location = p.get('location') || p.get('location_id') || '';
+      s.dataset.webhook  = p.get('webhook')  || '';
+      s.dataset.height   = String(H);
+      document.body.appendChild(s);
+
+      // Once the loader creates its iframe, force it to fill the container
+      const apply = () => {
+        const f = document.querySelector('#vq-dashboard-container iframe');
+        if (f) {
+          f.style.height = H + 'px';
+          f.style.width  = '100%';
+          f.style.border = '0';
+          f.style.display = 'block';
+          f.setAttribute('scrolling','no');
+        }
+      };
+      new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
+      window.addEventListener('resize', apply);
+    })();
+  </script>
+</body>
+</html>
