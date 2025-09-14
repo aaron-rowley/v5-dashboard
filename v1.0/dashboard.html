@@ -15,37 +15,50 @@
     *{box-sizing:border-box}
     html,body{background:var(--bg-main); color:var(--text); margin:0; font-family:var(--font); height:auto; overflow:visible}
 
-    /* ===== Loader: spinner + progress bar ===== */
-    body.loading .wrap{display:none;}
-    body.loading #loader{display:grid;}
+    /* ===== Loader: now a top bar (not full overlay) ===== */
+    /* Keep content visible while loading */
+    body.loading .wrap{display:block;}
+    body.loading #loader{display:flex;}
+
     #loader{
-      position:fixed; inset:0; display:none;
-      place-items:center; /* center each item */
-      place-content:center; /* center the whole stack (fixes spacing) */
-      gap:12px; /* consistent spacing between items */
-      z-index:9999;
-      background:rgba(15,17,21,.92);
-      backdrop-filter:saturate(115%) blur(1.5px)
+      position:fixed; top:0; left:0; right:0; height:72px; display:none;
+      align-items:center; justify-content:center; gap:14px; z-index:9999;
+      background:linear-gradient(180deg, rgba(15,17,21,.96), rgba(15,17,21,.90));
+      border-bottom:1px solid var(--line);
+      backdrop-filter:saturate(115%) blur(2px);
+      padding:10px 16px;
     }
     .spinner{
-      width:88px; height:88px; border-radius:50%;
+      width:28px; height:28px; border-radius:50%;
       background:radial-gradient(closest-side,rgba(237,108,3,.18),rgba(237,108,3,.06) 55%,transparent 60%);
-      position:relative; box-shadow:0 0 60px rgba(237,108,3,.25)
+      position:relative; box-shadow:0 0 18px rgba(237,108,3,.25);
+      flex:0 0 auto;
     }
     .spinner:after{
-      content:""; position:absolute; inset:10px; border-radius:50%;
-      border:6px solid transparent; border-top-color:var(--primary);
-      filter:drop-shadow(0 0 8px rgba(237,108,3,.9));
-      animation:spin 1s linear infinite
+      content:""; position:absolute; inset:4px; border-radius:50%;
+      border:3px solid transparent; border-top-color:var(--primary);
+      filter:drop-shadow(0 0 6px rgba(237,108,3,.85));
+      animation:spin 1s linear infinite;
     }
     @keyframes spin{to{transform:rotate(360deg)}}
-    .loadbar{width:380px; max-width:82vw; height:8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); overflow:hidden}
-    .loadbar>span{display:block; width:0%; height:100%; background:linear-gradient(90deg, rgba(237,108,3,.2), rgba(237,108,3,.9)); box-shadow:0 0 14px rgba(237,108,3,.45); animation:slowfill 30s linear forwards}
-    @keyframes slowfill{from{width:0%} to{width:100%}}
-    #loadtext{color:#d6dbe5; font-weight:700; letter-spacing:.2px}
 
-    /* ===== Layout & UI ===== */
-    .wrap{width:100%; max-width:100%; margin:24px auto 80px; padding:0 16px}
+    .loadbar{
+      width:min(560px,82vw); height:8px; border-radius:999px;
+      border:1px solid var(--line); background:rgba(255,255,255,.04); overflow:hidden;
+    }
+    .loadbar>span{
+      display:block; width:0%; height:100%;
+      background:linear-gradient(90deg, rgba(237,108,3,.2), rgba(237,108,3,.9));
+      box-shadow:0 0 14px rgba(237,108,3,.45);
+      animation:slowfill 30s linear forwards;
+    }
+    @keyframes slowfill{from{width:0%} to{width:100%}}
+    #loadtext{color:#d6dbe5; font-weight:700; letter-spacing:.2px; white-space:nowrap}
+
+    /* Add a little top spacing so content isn't hidden by the fixed loader bar */
+    .wrap{width:100%; max-width:100%; margin:88px auto 80px; padding:0 16px}
+
+    /* ===== Layout & UI (unchanged below) ===== */
     .section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
     .section-title h1{margin:0; font-size:20px; font-weight:800}
     .hint{color:var(--muted); font-size:.92rem}
@@ -54,20 +67,17 @@
     .btn:hover{background:var(--primary); border-color:var(--primary-dark)}
     .divider{height:1px; background:var(--line); margin:12px 0 18px}
 
-    /* Controls */
     .controls{display:grid; grid-template-columns:repeat(12,1fr); gap:12px; align-items:center; background:var(--bg-panel); border-radius:var(--radius); padding:12px; margin:8px 0 10px}
     .ctrl{grid-column:span 3; display:flex; flex-direction:column; gap:6px; min-width:0}
     .ctrl.small{grid-column:span 2}
     .label{color:var(--muted); font-size:.75rem; letter-spacing:.02em}
     select{appearance:none; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:10px 14px; font-weight:600; width:100%}
 
-    /* Keys row (tiny dot + label) */
     .keys{display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:2px 0 14px}
     .key{display:inline-flex; align-items:center; gap:8px; font-weight:700}
     .key .dot{width:10px; height:10px; border-radius:50%}
     .keygroup-title{color:var(--muted); font-size:.78rem; margin-right:6px; opacity:.9}
 
-    /* KPI cards */
     .grid-kpi{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:8px 0 16px}
     .kpi{background:var(--bg-panel); border-radius:var(--radius); padding:18px; transition:box-shadow .25s}
     .kpi h4{margin:0 0 10px; color:var(--muted); font-weight:600; font-size:.95rem}
@@ -76,7 +86,6 @@
     .kpi .pillline strong{color:var(--primary)}
     .kpi.glow{box-shadow:0 0 0 2px var(--primary), 0 0 24px rgba(237,108,3,.35)}
 
-    /* Cards + chart headers */
     .card{background:var(--bg-panel); border-radius:var(--radius); padding:14px}
     .section{background:var(--bg-panel); border-radius:var(--radius); padding:14px; margin-top:14px}
     .chart-header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
@@ -84,7 +93,6 @@
     .chart-sub{color:var(--muted); font-size:.92rem}
     .chart-ctrls{display:flex; align-items:center; gap:10px}
 
-    /* “i” tooltip */
     .info{position:relative; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:1px solid var(--line); color:#c9ced8; font-size:12px; cursor:help; opacity:.9}
     .info[data-tip]::after{
       content:attr(data-tip); position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px);
@@ -92,19 +100,16 @@
     }
     .info:hover::after{opacity:1}
 
-    /* Pipeline table */
     .pipe-row{display:grid; grid-template-columns:1.5fr .7fr 3fr; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line)}
     .pipe-row:last-child{border-bottom:none}
     .bar{height:8px; background:var(--bg-panel-2); border-radius:999px; overflow:hidden}
     .bar>span{display:block; height:100%; border-radius:999px}
 
-    /* Pipeline status filter chips */
     .chips{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px}
     .chip{display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; user-select:none; font-weight:700}
     .chip .dot{width:8px; height:8px; border-radius:50%}
     .chip.active{box-shadow:0 0 0 2px rgba(237,108,3,.6) inset}
 
-    /* Mobile tweaks */
     @media (max-width:980px){
       .grid-kpi{grid-template-columns:1fr 1fr}
       .ctrl{grid-column:span 6}
@@ -126,14 +131,18 @@
     }
   </style>
 </head>
+
 <body class="loading">
+  <!-- TOP LOADER BAR -->
   <div id="loader" aria-live="polite" aria-busy="true">
     <div class="spinner"></div>
     <div class="loadbar" aria-hidden="true"><span id="loadbar-fill"></span></div>
-    <div id="loadtext">Fetching data...</div>
+    <div id="loadtext">Fetching data…</div>
   </div>
 
   <div class="wrap">
+    <!-- header / controls / charts (unchanged) -->
+    <!-- ======= HEADER ======= -->
     <div class="section-title">
       <div>
         <h1 id="company">—</h1>
@@ -149,7 +158,7 @@
 
     <div class="divider"></div>
 
-    <!-- Controls -->
+    <!-- ======= CONTROLS ======= -->
     <div class="controls" id="controls">
       <div class="ctrl small">
         <div class="label">Range</div>
@@ -175,19 +184,10 @@
 
     <!-- KPIs -->
     <div class="grid-kpi">
-      <div class="kpi" id="kpi-contacted-card" title="How many prospects were contacted.">
-        <h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div>
-      </div>
-      <div class="kpi" id="kpi-replies-card" title="How many replies we received.">
-        <h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="pillline">Reply %: <strong id="kpi-replyPct">0%</strong></div>
-      </div>
-      <div class="kpi" id="kpi-leads-card" title="Leads or appointments created from replies.">
-        <h4>Appointments / Leads</h4><div class="big" id="kpi-leads">0</div>
-        <div class="pillline">Replies → Appt/Lead %: <strong id="kpi-r2l">0%</strong></div>
-      </div>
-      <div class="kpi" id="kpi-sold-card" title="Deals closed.">
-        <h4>Closed</h4><div class="big" id="kpi-sold">0</div><div class="pillline">Appt/Lead → Close %: <strong id="kpi-l2c">0%</strong></div>
-      </div>
+      <div class="kpi" id="kpi-contacted-card"><h4>Prospects contacted</h4><div class="big" id="kpi-contacted">0</div></div>
+      <div class="kpi" id="kpi-replies-card"><h4>Replies</h4><div class="big" id="kpi-replies">0</div><div class="pillline">Reply %: <strong id="kpi-replyPct">0%</strong></div></div>
+      <div class="kpi" id="kpi-leads-card"><h4>Appointments / Leads</h4><div class="big" id="kpi-leads">0</div><div class="pillline">Replies → Appt/Lead %: <strong id="kpi-r2l">0%</strong></div></div>
+      <div class="kpi" id="kpi-sold-card"><h4>Closed</h4><div class="big" id="kpi-sold">0</div><div class="pillline">Appt/Lead → Close %: <strong id="kpi-l2c">0%</strong></div></div>
     </div>
 
     <!-- TOP: Agent performance -->
@@ -215,7 +215,6 @@
       <div id="main-chart"></div>
     </div>
 
-    <!-- Divider: Agent vs Sales -->
     <div class="divider"></div>
 
     <!-- BOTTOM: Sales pipeline performance -->
@@ -237,7 +236,6 @@
         </div>
       </div>
 
-      <!-- Status filter chips -->
       <div class="label">Filter statuses</div>
       <div class="chips" id="status-chips"></div>
 
@@ -260,7 +258,6 @@
     const rangeLabel = r => ({'24h':'Last 24 Hours','7d':'Last 7 Days','30d':'Last 30 Days','90d':'Last 90 Days'})[r]||r;
     const chartLabel = c => ({'funnel':'Funnel','bar':'Bar (vertical)','bar-h':'Bar (horizontal)','donut':'Donut','line':'Line'})[c]||c;
 
-    // stable agent palette
     const PALETTE = ['#ed6c03','#22c55e','#8b5cf6','#3b82f6','#14b8a6','#ef4444','#eab308','#a855f7'];
     const agentColor = name => {
       if(!name) return '#6B7280';
@@ -269,13 +266,8 @@
     };
     const RANGE_COLORS = {'24h':'#ed6c03','7d':'#14b8a6','30d':'#3b82f6','90d':'#8b5cf6'};
     const METRIC_ACCENTS = {
-      'Reply %':'#ed6c03',
-      'Replies → Appt/Lead %':'#8b5cf6',
-      'Appt/Lead → Close %':'#22c55e',
-      'Contacted':'#3b82f6',
-      'Replies':'#ed6c03',
-      'Appointments / Leads':'#8b5cf6',
-      'Sold':'#22c55e'
+      'Reply %':'#ed6c03','Replies → Appt/Lead %':'#8b5cf6','Appt/Lead → Close %':'#22c55e',
+      'Contacted':'#3b82f6','Replies':'#ed6c03','Appointments / Leads':'#8b5cf6','Sold':'#22c55e'
     };
 
     let DATA = {};
@@ -295,11 +287,8 @@
 
     const getAgents = () => (DATA.agentsByRange?.[state.range]||[])
       .filter(a => a.agent && a.agent.toLowerCase()!=='cxa')
-      .map(a => ({
-        name:a.agent,
-        Contacted:a.outbound||0, Replies:a.inbound||0,
-        'Appointments / Leads':a.leads||0, Sold:a.sold||0
-      }));
+      .map(a => ({ name:a.agent, Contacted:a.outbound||0, Replies:a.inbound||0,
+                   'Appointments / Leads':a.leads||0, Sold:a.sold||0 }));
 
     const totalsOf = (arr) => arr.reduce((acc,c)=>{
       Object.keys(c).forEach(k=>{ if(k!=='name') acc[k]=(acc[k]||0)+(Number(c[k])||0); });
@@ -308,17 +297,17 @@
 
     const addDerived = (o) => ({
       ...o,
-      'Reply %': pct(o.Replies, o.Contacted),
-      'Replies → Appt/Lead %': pct(o['Appointments / Leads'], o.Replies),
-      'Appt/Lead → Close %': pct(o.Sold, o['Appointments / Leads'])
+      'Reply %': pct(o.Replies,o.Contacted),
+      'Replies → Appt/Lead %': pct(o['Appointments / Leads'],o.Replies),
+      'Appt/Lead → Close %': pct(o.Sold,o['Appointments / Leads'])
     });
 
-    /* ===== loader helpers ===== */
+    /* ===== Loader helpers ===== */
     function showLoader(flag){
       document.body.classList.toggle('loading', !!flag);
       if(flag){
         const f = $('#loadbar-fill');
-        f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; // restart bar
+        f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
       }
     }
     function finishLoader(){
@@ -329,30 +318,19 @@
       setTimeout(()=>{ showLoader(false); f.style.transition=''; f.style.width='0%'; }, 380);
     }
 
-    /* ===== UI color accents ===== */
+    /* ===== UI accents ===== */
     function setMetricAccent(){
       const color = METRIC_ACCENTS[state.metric] || '#ed6c03';
       $('#metric-pill-name').textContent = state.metric;
       const metricPill = $('#metric-pill');
       metricPill.style.borderColor = color;
-      metricPill.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 18px ${hexToRgba(color,.35)}`;
-
-      // KPI glow rules
+      metricPill.style.boxShadow = `0 0 0 2px ${color} inset, 0 0 18px rgba(237,108,3,.35)`;
       ['kpi-contacted-card','kpi-replies-card','kpi-leads-card','kpi-sold-card'].forEach(id=>$('#'+id).classList.remove('glow'));
       if(state.metric==='Contacted') $('#kpi-contacted-card').classList.add('glow');
-      if(state.metric==='Replies' || state.metric==='Reply %') {
-        $('#kpi-replies-card').classList.add('glow');
-        if(state.metric==='Reply %') $('#kpi-contacted-card').classList.add('glow');
-      }
+      if(state.metric==='Replies' || state.metric==='Reply %'){ $('#kpi-replies-card').classList.add('glow'); if(state.metric==='Reply %') $('#kpi-contacted-card').classList.add('glow'); }
       if(state.metric==='Appointments / Leads') $('#kpi-leads-card').classList.add('glow');
-      if(state.metric==='Replies → Appt/Lead %') {
-        $('#kpi-replies-card').classList.add('glow');
-        $('#kpi-leads-card').classList.add('glow');
-      }
-      if(state.metric==='Appt/Lead → Close %') {
-        $('#kpi-leads-card').classList.add('glow');
-        $('#kpi-sold-card').classList.add('glow');
-      }
+      if(state.metric==='Replies → Appt/Lead %'){ $('#kpi-replies-card').classList.add('glow'); $('#kpi-leads-card').classList.add('glow'); }
+      if(state.metric==='Appt/Lead → Close %'){ $('#kpi-leads-card').classList.add('glow'); $('#kpi-sold-card').classList.add('glow'); }
       if(state.metric==='Sold') $('#kpi-sold-card').classList.add('glow');
     }
 
@@ -371,21 +349,12 @@
       pill.style.boxShadow = state.agent==='All' ? 'none' : `0 0 0 2px ${agentColor(state.agent)} inset`;
     }
 
-    function hexToRgba(hex,a){
-      const v=hex.replace('#','');
-      const r=parseInt(v.slice(0,2),16), g=parseInt(v.slice(2,4),16), b=parseInt(v.slice(4,2+4),16);
-      return `rgba(${r},${g},${b},${a||1})`;
-    }
-
-    /* Keys row */
     function renderKeys(){
       const el = $('#keys-row');
       const bits = [];
       bits.push(`<span class="keygroup-title">Agents</span>`);
       const names = state.agent==='All' ? getAgents().map(a=>a.name) : [state.agent];
-      for(const n of names){
-        bits.push(`<span class="key"><span class="dot" style="background:${agentColor(n)}"></span>${n}</span>`);
-      }
+      for(const n of names){ bits.push(`<span class="key"><span class="dot" style="background:${agentColor(n)}"></span>${n}</span>`); }
       bits.push(`<span class="keygroup-title" style="margin-left:10px">Range</span>`);
       bits.push(`<span class="key"><span class="dot" style="background:${RANGE_COLORS[state.range]||'#6B7280'}"></span>${rangeLabel(state.range)}</span>`);
       el.innerHTML = bits.join('');
@@ -393,7 +362,6 @@
 
     /* ===== Populate & KPIs ===== */
     function populateSelectors(){
-      // top metric/chart selects
       $('#metric-select-top').innerHTML = METRICS.map(m=>`<option>${m.label}</option>`).join('');
       $('#metric-select-top').value = state.metric;
       $('#chart-select-top').value = state.chart;
@@ -404,10 +372,7 @@
 
       $('#range-select').value = state.range;
 
-      setMetricAccent();
-      setRangeAccent();
-      setAgentPill();
-      renderKeys();
+      setMetricAccent(); setRangeAccent(); setAgentPill(); renderKeys();
     }
 
     function renderHeaderKPIs(){
@@ -455,7 +420,7 @@
       if(state.agent==='All'){
         cats = agents.map(a=>a.name);
         dataVals = agents.map(a=>Number(a[selectedMetric.key])||0);
-      }else{
+      } else {
         const a = agents.find(x=>x.name===state.agent) || null;
         cats = ['Contacted','Replies','Appt/Leads','Sold'];
         dataVals = a ? [a.Contacted,a.Replies,a['Appointments / Leads'],a.Sold].map(v=>Number(v)||0) : [0,0,0,0];
@@ -470,14 +435,9 @@
         grid:{borderColor:LINE, strokeDashArray:4},
         tooltip:{theme:'dark', y:{formatter:(val)=> isPct ? `${Math.round(Number(val)||0)}%` : fmt2(val)}},
         legend:{labels:{colors:'#c9ced8'}},
-        xaxis:{
-          labels:{ style:{colors:'#c9ced8'}, rotate:0, trim:true },
-          title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}
-        },
-        yaxis:{
-          labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) },
-          min:0
-        }
+        xaxis:{ labels:{ style:{colors:'#c9ced8'}, rotate:0, trim:true },
+                title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}} },
+        yaxis:{ labels:{ style:{colors:'#c9ced8'}, formatter:(v)=> isPct ? `${Math.round(v)}%` : fmt2(v) }, min:0 }
       };
       let opts = {...baseOpts};
 
@@ -493,7 +453,6 @@
         opts.colors=[accent];
         opts.chart.type='bar';
         opts.plotOptions={bar:{horizontal:true, borderRadius:6, barHeight:'40%', dataLabels:{position:'center'}}};
-        // NaN fix: y is categorical
         opts.yaxis={ labels:{ style:{colors:'#c9ced8'} } };
         opts.dataLabels={enabled:true, style:{fontWeight:700}, formatter:(v,{dataPointIndex})=> fmt2(seriesData[dataPointIndex].y)};
         opts.series=[{name:state.metric, data:seriesData}];
@@ -511,8 +470,7 @@
           stroke:{show:true, width:0},
           dataLabels:{enabled: sum>0, formatter:(val)=> `${Math.round(val)}%`, style:{fontSize:'12px', fontWeight:700}},
           legend:{position:'right', labels:{colors:'#c9ced8'}},
-          fill:{
-            type:'gradient',
+          fill:{ type:'gradient',
             gradient:{ shade:'dark', type:'vertical', shadeIntensity:0.5, gradientToColors:colors.map(c=>lighten(c,.15)), opacityFrom:0.95, opacityTo:0.85, stops:[0,50,100]}
           },
           plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0?'Total':'No data', formatter:(w)=> sum>0? fmtInt(series.reduce((a,b)=>a+b,0)) : '' } } } } }
@@ -523,7 +481,6 @@
         opts.colors = colors;
         opts.chart.type='bar';
         opts.plotOptions={bar:{horizontal:true, borderRadius:6, distributed, dataLabels:{position:'center'}}};
-        // NaN fix: y is categories
         opts.yaxis={ labels:{ style:{colors:'#c9ced8'} } };
         opts.xaxis={...opts.xaxis, categories:cats, title:{text: isPct?'Percent':'Count', style:{color:'#c9ced8'}}};
         opts.dataLabels={enabled:true, style:{fontWeight:700}, formatter:(v)=> isPct? `${Math.round(v)}%` : fmt2(v)};
@@ -538,7 +495,7 @@
         opts.xaxis={...opts.xaxis, categories:cats, title:{text: state.agent==='All'?'Agents':'Stages', style:{color:'#c9ced8'}}};
         opts.series=[{name:state.metric, data:dataVals.map(v=>Math.max(0, Number(v)||0))}];
       } else { // line
-        const pointColors = cats.map(c=>agentColor(c)); // per-point colors
+        const pointColors = cats.map(c=>agentColor(c));
         const discrete = cats.map((c,i)=>({ seriesIndex:0, dataPointIndex:i, fillColor:pointColors[i], strokeColor:'#101215', size:4 }));
         opts.colors=[accent];
         opts.chart.type='line';
@@ -561,7 +518,7 @@
       return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
     }
 
-    /* ===== Pipeline data + status filter ===== */
+    /* ===== Pipeline ===== */
     function getPipeTotals(){
       if(state.agent==='All') return (DATA.auditStatusTotals||[]);
       const agentBlock = (DATA.auditByAgent||[]).find(a=>a.agent===state.agent);
@@ -575,12 +532,8 @@
 
     function renderStatusChips(rows){
       const container = $('#status-chips');
-      if(!rows.length){
-        container.innerHTML = '<span class="hint">No statuses.</span>';
-        return;
-      }
+      if(!rows.length){ container.innerHTML = '<span class="hint">No statuses.</span>'; return; }
       const allStatuses = rows.map(r=>String(r.Status));
-      // init selection first time
       if(state.pipeInclude.__init!==true){
         state.pipeInclude = new Set(allStatuses);
         state.pipeInclude.__init = true;
@@ -595,12 +548,8 @@
       container.querySelectorAll('.chip').forEach(ch=>{
         ch.addEventListener('click', ()=>{
           const key = ch.getAttribute('data-status');
-          if(key==='__ALL__'){
-            state.pipeInclude = new Set(allStatuses);
-          } else{
-            if(state.pipeInclude.has(key)) state.pipeInclude.delete(key);
-            else state.pipeInclude.add(key);
-          }
+          if(key==='__ALL__'){ state.pipeInclude = new Set(allStatuses); }
+          else { if(state.pipeInclude.has(key)) state.pipeInclude.delete(key); else state.pipeInclude.add(key); }
           renderPipeline();
         });
       });
@@ -638,49 +587,33 @@
         const base = { chart:{toolbar:{show:false}, parentHeightOffset:0, foreColor:'#c9ced8', dropShadow:{enabled:true, blur:2, opacity:.18}}, labels, colors, tooltip:{theme:'dark'}, legend:{labels:{colors:'#c9ced8'}} };
 
         if(view==='bars'){
-          const opts = {
-            ...base,
-            chart:{...base.chart, type:'bar'},
+          const opts = { ...base, chart:{...base.chart, type:'bar'},
             plotOptions:{bar:{horizontal:true, borderRadius:6, dataLabels:{position:'center'}}},
             xaxis:{categories:labels, title:{text:'Count', style:{color:'#c9ced8'}}},
             yaxis:{ labels:{ style:{colors:'#c9ced8'} } },
             dataLabels:{enabled:true, style:{fontWeight:700}, formatter:(v)=>fmt2(v)},
-            series:[{name:'Count', data:series}]
-          };
+            series:[{name:'Count', data:series}] };
           if(pipeChart) pipeChart.destroy();
-          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}});
-          pipeChart.render();
+          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
         } else if(view==='donut'){
           const sum = series.reduce((a,b)=>a+b,0);
-          const opts = {
-            ...base,
-            chart:{...base.chart, type:'donut'},
-            series: (sum>0?series:[1]),
-            labels: (sum>0?labels:['No data']),
-            colors: (sum>0?colors:['#2b2f36']),
-            stroke:{show:true, width:0},
+          const opts = { ...base, chart:{...base.chart, type:'donut'},
+            series:(sum>0?series:[1]), labels:(sum>0?labels:['No data']),
+            colors:(sum>0?colors:['#2b2f36']), stroke:{show:true, width:0},
             dataLabels:{enabled: sum>0, formatter:(v)=> `${Math.round(v)}%`},
-            plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0? 'Total':'No data', formatter:(w)=> sum>0? fmtInt(sum) : '' } } } } },
-            legend:{position:'right', labels:{colors:'#c9ced8'}}
-          };
+            plotOptions:{ pie:{ donut:{ size:'68%', labels:{ show:true, total:{ show:true, label: sum>0? 'Total':'No data', formatter:()=> sum>0? fmtInt(sum) : '' } } } } },
+            legend:{position:'right', labels:{colors:'#c9ced8'}} };
           if(pipeChart) pipeChart.destroy();
-          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}});
-          pipeChart.render();
-        } else { // line (with colored markers per point)
+          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
+        } else { // line
           const discrete = labels.map((l,i)=>({ seriesIndex:0, dataPointIndex:i, fillColor:agentColor(l), strokeColor:'#101215', size:4 }));
-          const opts = {
-            ...base,
-            colors:['#ed6c03'],
-            chart:{...base.chart, type:'line'},
-            stroke:{curve:'smooth', width:3},
-            markers:{size:3, discrete},
+          const opts = { ...base, colors:['#ed6c03'], chart:{...base.chart, type:'line'},
+            stroke:{curve:'smooth', width:3}, markers:{size:3, discrete},
             xaxis:{categories:labels, title:{text:'Status', style:{color:'#c9ced8'}}},
-            yaxis:{ labels:{ formatter:(v)=>fmt2(v) }, title:{text:'Count', style:{color:'#c9ced8'}} },
-            series:[{name:'Count', data:series}]
-          };
+            yaxis:{ labels:{ formatter:(v)=>fmt2(v) }, title:{text:'Count', style:{color:'#c9ced8'}}},
+            series:[{name:'Count', data:series}] };
           if(pipeChart) pipeChart.destroy();
-          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}});
-          pipeChart.render();
+          pipeChart = new ApexCharts($('#pipeline-chart'), {...opts, chart:{...opts.chart, height:h}}); pipeChart.render();
         }
       }
     }
@@ -706,13 +639,11 @@
         state.agent='All'; $('#agent-select').value='All'; setAgentPill(); renderKeys(); state.pipeInclude.__init=false; refreshAll();
       });
       $('#refresh-btn').addEventListener('click', ()=> window.location.reload());
+
       window.addEventListener('resize', ()=> sendHeight());
       window.addEventListener('message', (e)=>{
         const m=e?.data; if(!m) return;
-        if(m.type==='VQ_METRICS'){ 
-          gotParentPayload = true;           // <-- NEW: mark parent provided data
-          renderDashboard(m.payload); 
-        }
+        if(m.type==='VQ_METRICS'){ renderDashboard(m.payload); }
         if(m.type==='VQ_REQUEST_HEIGHT'){ sendHeight(); }
       });
     }
@@ -731,7 +662,7 @@
     const ro = new ResizeObserver(()=> sendHeight());
     ro.observe(document.documentElement);
 
-    // public entry
+    // public entry point (from parent/loader)
     window.renderDashboard = function(payload){
       try{
         showLoader(true);
@@ -751,39 +682,12 @@
       }
     };
 
-    // ==== NEW: ONE-SHOT BOOTSTRAP in case parent doesn't send VQ_METRICS ====
-    const VQ_WEBHOOK_URL = 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
-    let bootstrapped = false;
-    let gotParentPayload = false;
-
-    async function bootstrapFetchOnce(){
-      if (bootstrapped || gotParentPayload) return;
-      bootstrapped = true;
-      showLoader(true);
-      try{
-        const res = await fetch(VQ_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ range: state.range }) // adapt if your API needs different params
-        });
-        const json = await res.json().catch(()=> ({}));
-        window.renderDashboard(json);
-      } catch(err){
-        console.error('Webhook fetch failed:', err);
-        finishLoader();
-      }
-    }
-    // ==== END NEW ====
-
+    // Boot UI only; data must come from parent loader
     document.addEventListener('DOMContentLoaded', ()=>{
-      // kick the loader’s slow bar even before data arrives
       showLoader(true);
       populateSelectors();
       wire();
       sendHeight();
-
-      // NEW: prefer parent data; if none within 600ms, hit webhook ONCE
-      setTimeout(()=> { if (!gotParentPayload) bootstrapFetchOnce(); }, 600);
     });
   })();
   </script>
