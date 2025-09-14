@@ -131,22 +131,23 @@
       select{padding:9px 12px}
     }
 
-    /* --- Force loader to always center (override) --- */
+    /* --- Force loader to center (flex) but only when active --- */
     #loader{
       position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      inset: auto !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      display: flex !important;
+      top: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      display: none !important; /* hidden by default */
       align-items: center !important;
       justify-content: center !important;
       flex-direction: column !important;
       gap: 12px !important;
       z-index: 9999 !important;
+      background: rgba(15,17,21,.92) !important;
+      backdrop-filter: saturate(115%) blur(1.5px) !important;
     }
+    body.loading #loader{ display: flex !important; }
   </style>
 </head>
 <body class="loading">
@@ -470,7 +471,7 @@
       const seriesData = [
         {x:'Contacted', y:Number(b.Contacted)||0},
         {x:'Replies', y:Number(b.Replies)||0},
-        {x:'Appt/Leads', y:Number(b['Appointments / Leads'])||0},
+        {x:'Appt/Leads', y.Number ? Number(b['Appointments / Leads'])||0 : b['Appointments / Leads']||0},
         {x:'Sold', y:Number(b.Sold)||0}
       ];
       opts.colors=[accent];
