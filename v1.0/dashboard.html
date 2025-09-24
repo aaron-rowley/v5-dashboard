@@ -703,69 +703,100 @@
     ro.observe(document.documentElement);
 
     // ===== Robust bootstrapping & fail-safe =====
-    const VQ_WEBHOOK_URL = 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
-    let gotParentPayload = false;
-    let bootstrapped = false;
-    let hasRendered = false;
+const VQ_WEBHOOK_URL = 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
 
-    async function bootstrapFetchOnce(){
-      if (bootstrapped || gotParentPayload || hasRendered) return;
-      bootstrapped = true;
-      try{
-        const res = await fetch(VQ_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ range: state.range })
-        });
-        const json = await res.json().catch(()=> ({}));
-        renderDashboard(json);
-      }catch(e){
-        console.error('Webhook bootstrap failed:', e);
-      }
-    }
+// Opt-in bootstrap: only fire a webhook if ?bootstrap=1 is present in iframe URL
+const urlParams = new URLSearchParams(location.search);
+const allowBootstrap = urlParams.get('bootstrap') === '1';
 
-    // public entry point (from parent/loader or bootstrap)
-    window.renderDashboard = function(payload){
-      try{
-        showLoader(true);
-        const next = (typeof payload==='string')? JSON.parse(payload||'{}') : (payload||{});
-        DATA = next;
-        state.range = '24h';
-        state.chart = 'funnel';
-        state.metric = state.metric || 'Reply %';
-        state.agent = 'All';
-        state.pipeInclude = new Set(); state.pipeInclude.__init=false;
-        populateSelectors();
-        refreshAll();
-        hasRendered = true;
-      }catch(err){
-        console.error('renderDashboard failed', err);
-      } finally{
-        finishLoader();
-      }
-    };
+let gotParentPayload = false;
+let hasRendered = false;
+let bootstrapAbort = null;
 
-    // Boot UI; prefer parent, then webhook; never get stuck
-    document.addEventListener('DOMContentLoaded', ()=>{
-      showLoader(true);
-      populateSelectors();
-      wire();
-      sendHeight();
+async function bootstrapFetchOnce(){
+  if (!allowBootstrap || gotParentPayload || hasRendered || bootstrapAbort) return;
 
-      // if parent doesn't send quickly, try webhook once
-      setTimeout(()=> { if (!gotParentPayload) bootstrapFetchOnce(); }, 700);
+  const locationId = urlParams.get('locationId') || urlParams.get('location_id') || null;
+  const controller = new AbortController();
+  bootstrapAbort = controller;
 
-      // ultimate fail-safe: show empty shell (no data) rather than hang
-      setTimeout(()=> {
-        if (!hasRendered){
-          console.warn('Failsafe: rendering empty shell to avoid stuck loader.');
-          DATA = DATA || {};
-          try{ populateSelectors(); refreshAll(); }catch{}
-          finishLoader();
-        }
-      }, 6500);
+  try{
+    const res = await fetch(VQ_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        range: state.range,
+        ...(locationId ? { locationId } : {})
+      })
     });
-  })();
-  </script>
+    if (controller.signal.aborted) return;
+    const json = await res.json().catch(()=> ({}));
+    renderDashboard(json);
+  }catch(e){
+    if (e.name !== 'AbortError') console.error('Webhook bootstrap failed:', e);
+  }finally{
+    bootstrapAbort = null;
+  }
+}
+
+// Helper: check if payload has real data
+function hasMeaningfulData(p){
+  if (!p || typeof p !== 'object') return false;
+  if (Array.isArray(p.agentsByRange?.['24h']) && p.agentsByRange['24h'].length) return true;
+  if (Array.isArray(p.auditStatusTotals) && p.auditStatusTotals.length) return true;
+  if (Array.isArray(p.auditByAgent) && p.auditByAgent.length) return true;
+  return false;
+}
+
+// public entry point (from parent/loader or bootstrap)
+window.renderDashboard = function(payload){
+  showLoader(true);
+  try{
+    const next = (typeof payload==='string')? JSON.parse(payload||'{}') : (payload||{});
+    DATA = next;
+    state.range = '24h';
+    state.chart = 'funnel';
+    state.metric = state.metric || 'Reply %';
+    state.agent = 'All';
+    state.pipeInclude = new Set(); state.pipeInclude.__init=false;
+
+    populateSelectors();
+    refreshAll();
+
+    if (hasMeaningfulData(DATA)) {
+      hasRendered = true;
+      finishLoader();
+    } else {
+      const t=$('#loadtext'); if(t) t.textContent='Waiting for data…';
+    }
+  }catch(err){
+    console.error('renderDashboard failed', err);
+    const t=$('#loadtext'); if(t) t.textContent='Error loading — retrying…';
+  }
+};
+
+// Boot UI; prefer parent, then webhook; never get stuck
+document.addEventListener('DOMContentLoaded', ()=>{
+  showLoader(true);
+  populateSelectors();
+  wire();
+  sendHeight();
+
+  // give parent a chance first
+  setTimeout(()=> { bootstrapFetchOnce(); }, 700);
+
+  // ultimate fail-safe: render empty shell but keep loader if no data
+  setTimeout(()=> {
+    if (!hasRendered){
+      console.warn('Failsafe: rendering empty shell to avoid stuck loader.');
+      DATA = DATA || {};
+      try{ populateSelectors(); refreshAll(); }catch{}
+      // important: do NOT call finishLoader() here
+    }
+  }, 6500);
+});
+})();
+</script>
 </body>
 </html>
