@@ -90,6 +90,9 @@
 
   // ---------- When iframe loads, fetch metrics + send to child ----------
   ifr.addEventListener('load', function () {
+        // Tell the child we (the parent) are about to fetch → disable any bootstrap
+    try { ifr.contentWindow.postMessage({ type: 'VQ_PARENT_WILL_FETCH' }, '*'); } catch (e) {}
+
     if (AUTO_HEIGHT) startPinging();
 
     var body = { location: { id: LOCATION_ID } };
