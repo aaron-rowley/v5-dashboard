@@ -705,9 +705,10 @@
 /* ===== Robust bootstrapping & fail-safe ===== */
 /* BOOTSTRAP_BLOCK — START */
 const VQ_WEBHOOK_URL = 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
+
 const urlParams = new URLSearchParams(location.search);
 
-// ✅ New: child only bootstraps if explicitly enabled via ?bootstrap=1
+// ✅ Only allow child-side bootstrap if you explicitly pass ?bootstrap=1
 const ALLOW_BOOTSTRAP = urlParams.get('bootstrap') === '1';
 
 let gotParentPayload = false;
@@ -715,7 +716,7 @@ let hasRendered = false;
 let bootstrapAbort = null;
 
 function hasUsableData(d){
-  if(!d) return false;
+  if (!d) return false;
   if (d.agentsByRange && Object.keys(d.agentsByRange).length) return true;
   if (Array.isArray(d.auditStatusTotals) && d.auditStatusTotals.length) return true;
   if (Array.isArray(d.auditByAgent) && d.auditByAgent.length) return true;
@@ -723,10 +724,11 @@ function hasUsableData(d){
 }
 
 async function bootstrapFetchOnce(){
-  if (!ALLOW_BOOTSTRAP) return;            // ❗ do nothing unless explicitly allowed
+  if (!ALLOW_BOOTSTRAP) return;             // ← hard gate
   if (gotParentPayload || hasRendered || bootstrapAbort) return;
 
   const locationId = urlParams.get('locationId') || urlParams.get('location_id') || null;
+
   const controller = new AbortController();
   bootstrapAbort = controller;
 
@@ -737,7 +739,7 @@ async function bootstrapFetchOnce(){
       signal: controller.signal,
       body: JSON.stringify({
         range: state.range,
-        ...(locationId ? { locationId } : {})   // still pass it if present
+        ...(locationId ? { locationId } : {})
       })
     });
     if (controller.signal.aborted) return;
@@ -750,18 +752,23 @@ async function bootstrapFetchOnce(){
   }
 }
 
-// Parent → iframe payload
+// Parent → iframe messages
 window.addEventListener('message', (e)=>{
   const m = e?.data; if(!m) return;
-  if(m.type==='VQ_METRICS'){
+  if (m.type === 'VQ_PARENT_WILL_FETCH') {
+    // Parent is fetching; disable any child bootstrap
     gotParentPayload = true;
-    if (bootstrapAbort) bootstrapAbort.abort();
+    if (bootstrapAbort) try{ bootstrapAbort.abort(); }catch(_){}
+    return;
+  }
+  if (m.type === 'VQ_METRICS') {
+    gotParentPayload = true;
+    if (bootstrapAbort) try{ bootstrapAbort.abort(); }catch(_){}
     renderDashboard(m.payload);
   }
-  if(m.type==='VQ_REQUEST_HEIGHT'){ sendHeight(); }
+  if (m.type === 'VQ_REQUEST_HEIGHT') { sendHeight(); }
 });
 
-// public entry point
 window.renderDashboard = function(payload){
   showLoader(true);
   try{
@@ -779,13 +786,13 @@ window.renderDashboard = function(payload){
     refreshAll();
     hasRendered = true;
 
-    // ✅ Only finish loader if payload looks real (prevents the “all zeroes” flash)
+    // ✅ Only hide the loader when payload looks real
     if (hasUsableData(DATA)) {
       finishLoader();
     } else {
       const t=$('#loadtext');
       if(t) t.textContent='Still working — large data set, waiting for results…';
-      // Keep loader visible; parent payload or a later retry will finish it.
+      // keep loader visible; parent payload will finish it
     }
   }catch(err){
     console.error('renderDashboard failed', err);
@@ -793,17 +800,17 @@ window.renderDashboard = function(payload){
   }
 };
 
-// Boot UI
+// Boot UI; prefer parent, then (optional) child bootstrap
 document.addEventListener('DOMContentLoaded', ()=>{
   showLoader(true);
   populateSelectors();
   wire();
   sendHeight();
 
-  // Give parent a chance; only then (and only if allowed) try our own webhook
+  // Give parent a chance first; only then, and only if allowed, try our own webhook
   setTimeout(()=> { bootstrapFetchOnce(); }, 900);
 
-  // If nothing after 3 minutes, keep loader up with a friendly message.
+  // Failsafe: keep loader if nothing yet
   setTimeout(()=> {
     if (!hasRendered){
       console.warn('Failsafe: no data after 3 minutes — keeping loader up.');
@@ -812,6 +819,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }, 180000);
 });
 /* BOOTSTRAP_BLOCK — END */
+
 
 })();
 </script>
