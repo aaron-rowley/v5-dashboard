@@ -705,19 +705,28 @@
 /* ===== Robust bootstrapping & fail-safe ===== */
 /* BOOTSTRAP_BLOCK — START */
 const VQ_WEBHOOK_URL = 'https://api.visquanta.com/webhook/Refresh-v5-dashboard';
-
 const urlParams = new URLSearchParams(location.search);
+
+// ✅ New: child only bootstraps if explicitly enabled via ?bootstrap=1
+const ALLOW_BOOTSTRAP = urlParams.get('bootstrap') === '1';
 
 let gotParentPayload = false;
 let hasRendered = false;
 let bootstrapAbort = null;
 
+function hasUsableData(d){
+  if(!d) return false;
+  if (d.agentsByRange && Object.keys(d.agentsByRange).length) return true;
+  if (Array.isArray(d.auditStatusTotals) && d.auditStatusTotals.length) return true;
+  if (Array.isArray(d.auditByAgent) && d.auditByAgent.length) return true;
+  return false;
+}
+
 async function bootstrapFetchOnce(){
+  if (!ALLOW_BOOTSTRAP) return;            // ❗ do nothing unless explicitly allowed
   if (gotParentPayload || hasRendered || bootstrapAbort) return;
 
-  // Try to pass locationId if present in the iframe URL so backend has context
   const locationId = urlParams.get('locationId') || urlParams.get('location_id') || null;
-
   const controller = new AbortController();
   bootstrapAbort = controller;
 
@@ -728,13 +737,10 @@ async function bootstrapFetchOnce(){
       signal: controller.signal,
       body: JSON.stringify({
         range: state.range,
-        ...(locationId ? { locationId } : {})
+        ...(locationId ? { locationId } : {})   // still pass it if present
       })
     });
-
-    // If parent beat us to it, we’ll have aborted: bail out
     if (controller.signal.aborted) return;
-
     const json = await res.json().catch(()=> ({}));
     renderDashboard(json);
   }catch(e){
@@ -744,18 +750,18 @@ async function bootstrapFetchOnce(){
   }
 }
 
-// Parent -> iframe payload
+// Parent → iframe payload
 window.addEventListener('message', (e)=>{
   const m = e?.data; if(!m) return;
   if(m.type==='VQ_METRICS'){
     gotParentPayload = true;
-    if (bootstrapAbort) bootstrapAbort.abort();   // cancel our webhook if it’s in-flight
+    if (bootstrapAbort) bootstrapAbort.abort();
     renderDashboard(m.payload);
   }
   if(m.type==='VQ_REQUEST_HEIGHT'){ sendHeight(); }
 });
 
-/* public entry point (from parent/loader or bootstrap) */
+// public entry point
 window.renderDashboard = function(payload){
   showLoader(true);
   try{
@@ -771,36 +777,42 @@ window.renderDashboard = function(payload){
 
     populateSelectors();
     refreshAll();
-
     hasRendered = true;
-    finishLoader();                 // ✅ hide loader once ANY payload arrives
+
+    // ✅ Only finish loader if payload looks real (prevents the “all zeroes” flash)
+    if (hasUsableData(DATA)) {
+      finishLoader();
+    } else {
+      const t=$('#loadtext');
+      if(t) t.textContent='Still working — large data set, waiting for results…';
+      // Keep loader visible; parent payload or a later retry will finish it.
+    }
   }catch(err){
     console.error('renderDashboard failed', err);
     const t=$('#loadtext'); if(t) t.textContent='Error loading — retrying…';
   }
 };
 
-// Boot UI; prefer parent, then webhook; never get stuck
+// Boot UI
 document.addEventListener('DOMContentLoaded', ()=>{
   showLoader(true);
   populateSelectors();
   wire();
   sendHeight();
 
-  // Always give parent a brief chance, then fire our own webhook (supports 1–3 min runs)
-  setTimeout(()=> { bootstrapFetchOnce(); }, 700);
+  // Give parent a chance; only then (and only if allowed) try our own webhook
+  setTimeout(()=> { bootstrapFetchOnce(); }, 900);
 
-  // Long failsafe: if nothing after 3 minutes, keep loader visible and show a friendlier message.
+  // If nothing after 3 minutes, keep loader up with a friendly message.
   setTimeout(()=> {
     if (!hasRendered){
       console.warn('Failsafe: no data after 3 minutes — keeping loader up.');
       const t=$('#loadtext'); if(t) t.textContent='Still working — large data set, please hang tight';
-      // Do NOT call finishLoader(); we keep the loader until real data arrives.
-      // You can optionally show a minimal shell here if you want, but not recommended.
     }
-  }, 180000); // 3 minutes
+  }, 180000);
 });
 /* BOOTSTRAP_BLOCK — END */
+
 })();
 </script>
 </body>
